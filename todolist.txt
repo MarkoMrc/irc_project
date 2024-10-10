@@ -1,0 +1,8 @@
+Coté server:
+- parsing : les differentes commandes, verifier la validité du port, les users, le channel, les permissions;
+- gérer les signaux;
+- recupérer les events;
+- créer le socket
+
+Coté Client:
+- revoir les setters et getters
