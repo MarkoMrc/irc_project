@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmaric <mmaric@student.42.fr>              +#+  +:+       +#+        */
+/*   By: emoreau <emoreau@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/02 09:14:39 by mmaric            #+#    #+#             */
-/*   Updated: 2024/10/02 09:14:39 by mmaric           ###   ########.fr       */
+/*   Updated: 2024/10/11 19:53:45 by emoreau          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,6 +64,12 @@ public:
 	
 	void serv_init(int port, std::string password);
 
+	/* methodes test de elias*/
+	bool askPassword(int socket);
+	void setSocketBlockingMode(int socket, bool blocking);
+
+
 	/*methodes pour les cmd, le parsing*/
 };
+
 #endif
