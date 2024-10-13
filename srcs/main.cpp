@@ -66,25 +66,63 @@ int main(int argc, char **argv)
 
     std::cout << "Serveur IRC démarré. En attente de connexions..." << std::endl;
 
-    while (true)
-	{
-        // Accepter une nouvelle connexion
-        if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0)
-		{
-            perror("Échec d'acceptation");
-            exit(EXIT_FAILURE);
-        }
-        server.setSocketBlockingMode(new_socket, 1);
-		server.askPassword(new_socket);
-        std::cout << "Nouvelle connexion acceptée, adresse IP: " << inet_ntoa(address.sin_addr) << std::endl;
-        
-        // Envoyer un message de bienvenue
-        const char *welcome_message = "Bienvenue sur ce serveur IRC!\n";
-        send(new_socket, welcome_message, strlen(welcome_message), 0);
-
-        // Fermer la connexion pour cet exemple simple
-        // close(new_socket);
+	 while ((new_socket = accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen)) >= 0) {
+        std::cout << "Nouvelle connexion acceptée." << std::endl;
+        server.handleConnection(new_socket);
     }
 
+    // while (true)
+	// {
+    //     // Accepter une nouvelle connexion
+    //     if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0)
+	// 	{
+    //         perror("Échec d'acceptation");
+    //         exit(EXIT_FAILURE);
+    //     }
+    //     server.setSocketBlockingMode(new_socket, 1);
+	// 	server.askPassword(new_socket);
+    //     std::cout << "Nouvelle connexion acceptée, adresse IP: " << inet_ntoa(address.sin_addr) << std::endl;
+        
+    //     // Envoyer un message de bienvenue
+    //     const char *welcome_message = "Bienvenue sur ce serveur IRC!\n";
+    //     send(new_socket, welcome_message, strlen(welcome_message), 0);
+
+    //     // Fermer la connexion pour cet exemple simple
+    //     // close(new_socket);
+    // }
+// 	while (true)
+// {
+//     // Accepter une nouvelle connexion
+//     if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0)
+//     {
+//         perror("Échec d'acceptation");
+//         exit(EXIT_FAILURE);
+//     }
+
+//     std::cout << "Nouvelle connexion acceptée, adresse IP: " << inet_ntoa(address.sin_addr) << std::endl;
+    
+//     // Assurez-vous que le socket est en mode bloquant
+//     server.setSocketBlockingMode(new_socket, 1);
+
+    // Demander le mot de passe et vérifier
+    // if (!server.askPassword(new_socket))
+    // {
+    //     // Si le mot de passe est incorrect, fermez la connexion
+    //     const char *refused_message = "Connexion refusée. Mot de passe incorrect.\n";
+    //     send(new_socket, refused_message, strlen(refused_message), 0);
+    //     close(new_socket);
+    //     continue;  // Attendre une autre connexion
+    // }
+
+    // // À ce stade, le mot de passe est correct
+    // std::cout << "Client authentifié." << std::endl;
+
+    // // Vous pouvez maintenant envoyer d'autres messages ou traiter la connexion
+    // const char *welcome_message = "Bienvenue sur ce serveur IRC!\n";
+    // send(new_socket, welcome_message, strlen(welcome_message), 0);
+    
+//     // Fermer la connexion pour cet exemple simple
+    // close(new_socket);
+// }
     return 0;
 }

@@ -43,6 +43,18 @@ private:
 	std::vector<Client> clients;
 	std::vector<Channel> channels;
 	int server_socket_fd;
+	void handleCapLs(int socket);
+    void handlePass(int socket, const std::string& params);
+    void handleNick(int socket, const std::string& params);
+    void handleUser(int socket, const std::string& params);
+    void handleOper(int socket, const std::string& params);
+    void handleMode(int socket, const std::string& params);
+    void handleQuit(int socket);
+    void handleJoin(int socket, const std::string& params);
+    void handlePart(int socket, const std::string& params);
+    void handleTopic(int socket, const std::string& params);
+    void handleKick(int socket, const std::string& params);
+    void handlePrivmsg(int socket, const std::string& params);
 
 public:
 	Server(/* args */);
@@ -66,10 +78,11 @@ public:
 
 	/* methodes test de elias*/
 	bool askPassword(int socket);
-	void setSocketBlockingMode(int socket, bool blocking);
+	void setSocketBlockingMode(int socket, int blocking);
 
 
 	/*methodes pour les cmd, le parsing*/
+	void handleConnection(int socket);
 };
 
 #endif
