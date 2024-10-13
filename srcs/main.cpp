@@ -17,7 +17,7 @@
 
 int main(int argc, char **argv)
 {
-		Server server;
+	Server server;
 	if (argc != 3)
 	{
 		std::cout << argv[0] << " port number password" << std::endl;

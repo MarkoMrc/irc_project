@@ -200,7 +200,21 @@ void Server::handleCapLs(int socket) {
 }
 
 void Server::handlePass(int socket, const std::string& params) {
+	std::string client_password = params.substr(0, params.find(' '));
     std::cout << "Commande PASS reçue avec params: " << params << std::endl;
+	std::string mdp = getPassword() + "\r\n";
+	// std::cout << "client password " << client_password << std::endl;
+	// std::cout << "mdp " << mdp << std::endl;
+    if (client_password == mdp) {
+        std::cout << "Mot de passe correct." << std::endl;
+        const char *msg = "Mot de passe correct. Connexion acceptée.\r\n";
+        send(socket, msg, strlen(msg), 0);
+    } else {
+        std::cout << "Mot de passe incorrect." << std::endl;
+        const char *msg = "Mot de passe incorrect. Connexion refusée.\r\n";
+        send(socket, msg, strlen(msg), 0);
+        close(socket);  // Fermer la connexion en cas de mot de passe incorrect
+    }
 }
 
 void Server::handleNick(int socket, const std::string& params) {
