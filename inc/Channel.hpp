@@ -45,6 +45,8 @@ public:
 	void addAdmin(Client new_client);
 	void removeClient(int fd);
 	void removeAdmin(int fd);
+
+	std::vector<Client>& getClients();
 };
 
 

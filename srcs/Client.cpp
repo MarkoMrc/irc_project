@@ -2,9 +2,9 @@
 
 Client::Client()
 {
+	this->fd = -1;
 	this->username = "";
 	this->nickname = "";
-	this->fd = -1;
 	this->ip_add = "";
 	this->logged = false;
 	this->registered = false;
@@ -57,7 +57,7 @@ std::string Client::getHostname(){
 	return this->hostname;
 }
 
-void Client::setUsername(std::string& username){
+void Client::setUsername(const std::string& username){
 	this->username = username;
 }
 
@@ -67,6 +67,14 @@ void Client::setFd(int fd){}
 
 void Client::setIp_add(std::string ip_add){}
 
-void Client::setNickname(std::string& nickname){
+void Client::setNickname(const std::string& nickname){
 	this->nickname = nickname;
+}
+
+void Client::setHostname(const std::string& hostname){
+	this->hostname = hostname;
+}
+
+void Client::setIsOperator(bool isOperator){
+	this->isOperator = isOperator;
 }

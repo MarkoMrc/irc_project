@@ -32,14 +32,33 @@ std::string Server::getPassword(){
 	return this->password;
 }
 
-Client *Server::getClient(int fd){
-	for (size_t i = 0; i < this->clients.size(); i++)
-	{
-		if (this->clients[i].getFd() == fd)
-			return &this->clients[i];
-	}
-	return NULL;
+// Client *Server::getClient(int fd){
+// 	for (size_t i = 0; i < this->clients.size(); i++)
+// 	{
+// 		if (this->clients[i].getFd() == fd)
+// 			return &this->clients[i];
+// 	}
+// 	return NULL;
+// }
+
+Client* Server::getClient(int fd) {
+    for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
+        if (it->getFd() == fd) {
+            return &(*it);  // Retourner un pointeur vers le client trouvé
+        }
+    }
+    return nullptr;  // Si aucun client n'est trouvé
 }
+
+Client* Server::getClient(const std::string& nickname) {
+    for (auto& client : clients) {
+        if (client.getNickname() == nickname) {
+            return &client;  // Retourne un pointeur vers le client trouvé
+        }
+    }
+    return nullptr;  // Si aucun client n'a ce nickname, on retourne nullptr
+}
+
 Channel *Server::getChannel(std::string name){
 	for (size_t i = 0; i < this->channels.size(); i++)
 	{
@@ -142,8 +161,23 @@ void Server::handleConnection(int socket) {
     int valread;
 
     // Boucle buffer
+	// Client *client = getClient(socket); // Récupère le client via son socket
+    // if (client == nullptr) {
+    //     std::cerr << "Client not found for socket: " << socket << std::endl;
+    //     return;
+    // }
+
     while ((valread = recv(socket, buffer, 1024, 0)) > 0) {
         std::string received_data(buffer, valread);
+
+		// j'enleve le CRLF
+		size_t pos;
+        while ((pos = received_data.find('\r')) != std::string::npos) {
+            received_data.erase(pos, 1);
+        }
+        while ((pos = received_data.find('\n')) != std::string::npos) {
+            received_data.erase(pos, 1);
+        }
 
         // je recup les cmd
         std::string command = received_data.substr(0, received_data.find(' '));
@@ -155,7 +189,7 @@ void Server::handleConnection(int socket) {
             }
         } else if (command == "PASS") {
             handlePass(socket, params);
-        } else if (command == "NICK") {
+        } else if (command == "NICK\r\n") {
             handleNick(socket, params);
         } else if (command == "USER") {
             handleUser(socket, params);
@@ -188,72 +222,4 @@ void Server::handleConnection(int socket) {
     } else if (valread < 0) {
         std::cerr << "Error" << std::endl;
     }
-}
-
-// CAP LS
-void Server::handleCapLs(int socket) {
-    std::cout << "Commande CAP LS reçue" << std::endl;
-
-    const char *cap_response = "CAP * LS :\r\n";
-    send(socket, cap_response, strlen(cap_response), 0);
-	std::cout << "CAP LS" << std::endl;
-}
-
-void Server::handlePass(int socket, const std::string& params) {
-	std::string client_password = params.substr(0, params.find(' '));
-    std::cout << "Commande PASS reçue avec params: " << params << std::endl;
-	std::string mdp = getPassword() + "\r\n";
-	// std::cout << "client password " << client_password << std::endl;
-	// std::cout << "mdp " << mdp << std::endl;
-    if (client_password == mdp) {
-        std::cout << "Mot de passe correct." << std::endl;
-        const char *msg = "Mot de passe correct. Connexion acceptée.\r\n";
-        send(socket, msg, strlen(msg), 0);
-    } else {
-        std::cout << "Mot de passe incorrect." << std::endl;
-        const char *msg = "Mot de passe incorrect. Connexion refusée.\r\n";
-        send(socket, msg, strlen(msg), 0);
-        close(socket);  // Fermer la connexion en cas de mot de passe incorrect
-    }
-}
-
-void Server::handleNick(int socket, const std::string& params) {
-    std::cout << "Commande NICK reçue avec params: " << params << std::endl;
-}
-
-void Server::handleUser(int socket, const std::string& params) {
-    std::cout << "Commande USER reçue avec params: " << params << std::endl;
-}
-
-void Server::handleOper(int socket, const std::string& params) {
-    std::cout << "Commande OPER reçue avec params: " << params << std::endl;
-}
-
-void Server::handleMode(int socket, const std::string& params) {
-    std::cout << "Commande MODE reçue avec params: " << params << std::endl;
-}
-
-void Server::handleQuit(int socket) {
-    std::cout << "Commande QUIT reçue" << std::endl;
-    close(socket);
-}
-
-void Server::handleJoin(int socket, const std::string& params) {
-    std::cout << "Commande JOIN reçue avec params: " << params << std::endl;
-}
-
-void Server::handlePart(int socket, const std::string& params) {
-    std::cout << "Commande PART reçue avec params: " << params << std::endl;
-}
-
-void Server::handleTopic(int socket, const std::string& params) {
-    std::cout << "Commande TOPIC reçue avec params: " << params << std::endl;
-}
-
-void Server::handleKick(int socket, const std::string& params) {
-    std::cout << "Commande KICK reçue avec params: " << params << std::endl;
-}
-
-void Server::handlePrivmsg(int socket, const std::string& params) {
-    std::cout << "Commande PRIVMSG reçue avec params: " << params << std::endl;
 }

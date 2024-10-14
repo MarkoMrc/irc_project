@@ -121,3 +121,7 @@ void Channel::removeAdmin(int fd){
 		}
 	}
 }
+
+std::vector<Client>& Channel::getClients() {
+    return clients;
+}

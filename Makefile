@@ -1,8 +1,8 @@
 NAME = ircserv
 CC = c++
-CFLAGS = #-Wall -Wextra -Werror -std=c++98
+CFLAGS = -g3 #-Wall -Wextra -Werror -std=c++98
 
-SRCS = srcs/main.cpp srcs/Channel.cpp srcs/Client.cpp srcs/Server.cpp
+SRCS = srcs/main.cpp srcs/Channel.cpp srcs/Client.cpp srcs/Server.cpp srcs/cmd.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 OBJS_BONUS = $(SRCS_BONUS:.cpp=.o)
@@ -19,7 +19,7 @@ clean:
 	@rm -f $(OBJS) $(OBJS_BONUS)
 
 fclean: clean
-	@rm -f $(NAME) $(NAME_BOUNUS) a.out
+	@rm -f $(NAME) $(NAME_BOUNUS)
 
 re: fclean all
 

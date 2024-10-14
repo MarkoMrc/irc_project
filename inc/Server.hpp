@@ -67,6 +67,7 @@ public:
 	std::string getPassword();
 	Client *getClient(int fd);
 	Channel *getChannel(std::string name);
+	Client *getClient(const std::string& nickname);
 
 	void setFd(int fd_socket);
 	void setPort(int port);

@@ -49,8 +49,10 @@ public:
 	/*##SETTERS##
 	#nickname, fd, ip
 	*/
-	void setUsername(std::string& username);
-	void setNickname(std::string& nickname);
+	void setUsername(const std::string& username);
+	void setNickname(const std::string& nickname);
+	void setHostname(const std::string& hostname);
+	void setIsOperator(bool isOperator);
 	void setFd(int fd);
 	void setIp_add(std::string ip_add);
 	void setBuff(std::string buff);
