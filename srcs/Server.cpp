@@ -32,31 +32,22 @@ std::string Server::getPassword(){
 	return this->password;
 }
 
-// Client *Server::getClient(int fd){
-// 	for (size_t i = 0; i < this->clients.size(); i++)
-// 	{
-// 		if (this->clients[i].getFd() == fd)
-// 			return &this->clients[i];
-// 	}
-// 	return NULL;
-// }
-
 Client* Server::getClient(int fd) {
     for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
         if (it->getFd() == fd) {
-            return &(*it);  // Retourner un pointeur vers le client trouvé
+            return &(*it);  //pointeur vers le client trouvé
         }
     }
-    return nullptr;  // Si aucun client n'est trouvé
+    return nullptr;
 }
 
 Client* Server::getClient(const std::string& nickname) {
     for (auto& client : clients) {
         if (client.getNickname() == nickname) {
-            return &client;  // Retourne un pointeur vers le client trouvé
+            return &client;  //pointeur vers le client trouvé
         }
     }
-    return nullptr;  // Si aucun client n'a ce nickname, on retourne nullptr
+    return nullptr;
 }
 
 Channel *Server::getChannel(std::string name){
@@ -90,10 +81,72 @@ void Server::addChannel(Channel new_channel){
 }
 
 void Server::serv_init(int port, std::string password){
+	std::cout << "INIT" << std::endl;
 	this->password = password;
 	this->port = port;
+	int opt = 1;
+
+	// Création du socket
+    server_socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_socket_fd == -1) {
+        std::cerr << "Erreur lors de la création du socket" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+	// Configurer le socket
+    if (setsockopt(server_socket_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)))
+	{
+        perror("Échec de setsockopt");
+        exit(EXIT_FAILURE);
+    }
+    // Configuration de l'adresse du serveur
+    struct sockaddr_in server_addr;
+    memset(&server_addr, 0, sizeof(server_addr)); // Initialiser la structure à zéro
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY; // Accepter les connexions sur toutes les interfaces
+    server_addr.sin_port = htons(port); // Convertir le port en format réseau
+    // Lier le socket à l'adresse
+    if (bind(server_socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        std::cerr << "Erreur lors de la liaison du socket" << std::endl;
+        close(server_socket_fd);
+        exit(EXIT_FAILURE);
+    }
+    // Écoute des connexions entrantes
+    if (listen(server_socket_fd, 10) < 0) {
+        std::cerr << "Erreur lors de l'écoute des connexions" << std::endl;
+        close(server_socket_fd);
+        exit(EXIT_FAILURE);
+    }
+    std::cout << "Serveur IRC démarré. En attente de connexions..." << std::endl;
 }
 
+void Server::run(){
+	while (true){
+		acceptClient();
+	}
+}
+
+void Server::acceptClient() {
+    struct sockaddr_in client_addr;
+    socklen_t client_addr_len = sizeof(client_addr);
+    int client_socket = accept(server_socket_fd, (struct sockaddr *)&client_addr, &client_addr_len);
+	std::cout << "client_socket : "<< client_socket << std::endl;
+    if (client_socket < 0) {
+        std::cerr << "Error accepting client connection" << std::endl;
+        return;
+    }
+
+    // Crée un nouvel objet Client avec le socket
+    Client new_client;
+    new_client.setFd(client_socket);  // Setter pour définir le socket du client
+	std::cout << "new_client : "<< new_client.getFd() << std::endl;
+
+    // Ajoute le client à la liste des clients du serveur
+    addClient(new_client);
+
+    // Gère la connexion
+    handleConnection(client_socket);
+}
 
 bool Server::askPassword(int socket)
 {
@@ -160,24 +213,17 @@ void Server::handleConnection(int socket) {
     char buffer[1024] = {0};
     int valread;
 
-    // Boucle buffer
-	// Client *client = getClient(socket); // Récupère le client via son socket
-    // if (client == nullptr) {
-    //     std::cerr << "Client not found for socket: " << socket << std::endl;
-    //     return;
-    // }
-
     while ((valread = recv(socket, buffer, 1024, 0)) > 0) {
         std::string received_data(buffer, valread);
 
 		// j'enleve le CRLF
-		size_t pos;
-        while ((pos = received_data.find('\r')) != std::string::npos) {
-            received_data.erase(pos, 1);
-        }
-        while ((pos = received_data.find('\n')) != std::string::npos) {
-            received_data.erase(pos, 1);
-        }
+		// size_t pos;
+        // while ((pos = received_data.find('\r')) != std::string::npos) {
+        //     received_data.erase(pos, 1);
+        // }
+        // while ((pos = received_data.find('\n')) != std::string::npos) {
+        //     received_data.erase(pos, 1);
+        // }
 
         // je recup les cmd
         std::string command = received_data.substr(0, received_data.find(' '));
@@ -189,7 +235,7 @@ void Server::handleConnection(int socket) {
             }
         } else if (command == "PASS") {
             handlePass(socket, params);
-        } else if (command == "NICK\r\n") {
+        } else if (command == "NICK") {
             handleNick(socket, params);
         } else if (command == "USER") {
             handleUser(socket, params);

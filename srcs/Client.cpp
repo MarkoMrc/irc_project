@@ -63,7 +63,9 @@ void Client::setUsername(const std::string& username){
 
 void Client::setBuff(std::string buff){}
 
-void Client::setFd(int fd){}
+void Client::setFd(int fd){
+	this->fd = fd;
+}
 
 void Client::setIp_add(std::string ip_add){}
 

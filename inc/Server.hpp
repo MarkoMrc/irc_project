@@ -84,6 +84,8 @@ public:
 
 	/*methodes pour les cmd, le parsing*/
 	void handleConnection(int socket);
+	void run();
+	void acceptClient();
 };
 
 #endif
