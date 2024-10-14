@@ -8,17 +8,17 @@ void Server::handleCapLs(int socket) {
 		std::cout << "erreur !client : "<< getClient(socket) << std::endl;
 	};
 
-    const char *cap_response = "CAP * LS :\r\n";
-    send(socket, cap_response, strlen(cap_response), 0);
-	std::cout << "CAP LS" << std::endl;
+    // const char *cap_response = "CAP * LS :\r\n";
+    // send(socket, cap_response, strlen(cap_response), 0);
+	// std::cout << "CAP LS" << std::endl;
 }
 
 void Server::handlePass(int socket, const std::string& params) {
 	std::string client_password = params.substr(0, params.find(' '));
     std::cout << "Commande PASS reçue avec params: " << params << std::endl;
-	std::string mdp = getPassword() + "\r\n";
-	// std::cout << "client password " << client_password << std::endl;
-	// std::cout << "mdp " << mdp << std::endl;
+	std::string mdp = getPassword() + "\r";
+	std::cout << "client password " << client_password << std::endl;
+	std::cout << "mdp " << mdp << std::endl;
     if (client_password == mdp) {
         std::cout << "Mot de passe correct." << std::endl;
         const char *msg = "Mot de passe correct. Connexion acceptée.\r\n";
@@ -45,6 +45,27 @@ void Server::handleNick(int socket, const std::string& params) {
 
 void Server::handleUser(int socket, const std::string& params) {
     std::cout << "Commande USER reçue avec params: " << params << std::endl;
+	std::istringstream iss(params);
+    std::string nickname, hostname, servername, username;
+
+    std::getline(iss, nickname, ' ');
+    std::getline(iss, hostname, ' ');
+    std::getline(iss, servername, ':');
+    std::getline(iss, username, ' ');  // Réel nom est souvent précédé de ':'
+	std::cout << "Username : " << username << std::endl;
+    Client *client = getClient(socket);
+    if (client) {
+		std::cout << "client existant" << std::endl;
+		client->setNickname(nickname);
+		client->setHostname(hostname);
+        client->setUsername(username);
+		std::cout << "Utilisateur défini : " << client->getNickname() << std::endl;
+		std::cout << "Utilisateur défini : " << client->getHostname() << std::endl;
+		std::cout << "Utilisateur défini : " << client->getUsername() << std::endl;
+    } else {
+        std::cerr << "Client introuvable pour le socket : " << socket << std::endl;
+    }
+
 }
 
 
@@ -59,7 +80,7 @@ void Server::handleMode(int socket, const std::string& params) {
 void Server::handleQuit(int socket) {
     std::cout << "Commande QUIT reçue" << std::endl;
 	Client *client = getClient(socket);
-	std::cout << "socket " << getClient(socket) << std::endl;
+	// std::cout << "socket " << getClient(socket) << std::endl;
     if (!client){
 		std::cout << "erreur !client" << std::endl;
 	}
@@ -75,7 +96,6 @@ void Server::handleQuit(int socket) {
 	const char *msg = "You quit.\r\n";
     send(socket, msg, strlen(msg), 0);
     close(socket);  // Fermer le socket du client
-	// std::cout << "socket after close" << getClient(socket) << std::endl;
 }
 
 void Server::handleJoin(int socket, const std::string& params) {

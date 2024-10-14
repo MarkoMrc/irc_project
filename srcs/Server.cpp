@@ -226,8 +226,16 @@ void Server::handleConnection(int socket) {
         // }
 
         // je recup les cmd
-        std::string command = received_data.substr(0, received_data.find(' '));
-        std::string params = received_data.substr(received_data.find(' ') + 1);
+        // std::string command = received_data.substr(0, received_data.find(' '));
+        // std::string params = received_data.substr(received_data.find(' ') + 1);
+		std::istringstream iss(received_data);
+		std::cout << "received data" << received_data << std::endl;
+        std::string command;
+        std::getline(iss, command, ' '); // Premier token : la commande
+
+        // Récupérer les paramètres après la commande
+        std::string params;
+        std::getline(iss, params); // Le reste après le premier espace
 
         if (command == "CAP") {
             if (params.substr(0, 2) == "LS") {
@@ -261,7 +269,6 @@ void Server::handleConnection(int socket) {
 
         memset(buffer, 0, sizeof(buffer)); // buffer set à 0 pour la prochaine boucle
     }
-
     if (valread == 0) {
         std::cout << "disconnected" << std::endl;
         close(socket);
