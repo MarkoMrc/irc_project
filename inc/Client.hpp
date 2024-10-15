@@ -27,7 +27,7 @@ private:
 	std::string hostname;
 	bool isOperator;
 	bool registered;
-	bool logged;
+	bool logged_in;
 	
 public:
 	Client();
@@ -57,6 +57,11 @@ public:
 	void setIp_add(std::string ip_add);
 	void setBuff(std::string buff);
 	/*#METHODS*/
+	 // Nouvelle méthode pour définir si le client est authentifié
+    void setLogged(bool status);
+
+    // Méthode pour vérifier si le client est authentifié
+    bool isLogged() const;
 };
 
 #endif

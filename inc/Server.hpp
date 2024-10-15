@@ -86,6 +86,8 @@ public:
 	void handleConnection(int socket);
 	void run();
 	void acceptClient();
+	bool isRegistered(int socket);
+	void authenticateClient(int socket, const std::string& password, const std::string& nickname, const std::string& username);
 };
 
 #endif

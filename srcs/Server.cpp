@@ -148,6 +148,44 @@ void Server::acceptClient() {
     handleConnection(client_socket);
 }
 
+bool Server::isRegistered(int socket) {
+    Client* client = getClient(socket);
+    if (client == nullptr) {
+        std::cerr << "Client not found for socket: " << socket << std::endl;
+        return false;
+    }
+
+    if (!client->getNickname().empty() && !client->getUsername().empty() && client->isLogged()) {
+        return true;
+    }
+    return false;
+}
+
+void Server::authenticateClient(int socket, const std::string& password, const std::string& nickname, const std::string& username) {
+    Client* client = getClient(socket); // Récupère le client via son socket
+    if (client == nullptr) {
+        std::cerr << "Client not found for socket: " << socket << std::endl;
+        return;
+    }
+
+    // if (!password.empty() && password != this->password) {
+    //     std::cerr << "Mot de passe incorrect pour le client sur le socket: " << socket << std::endl;
+    //     // close(socket);
+    //     // return;
+    // }
+
+    // Définit le pseudonyme et le nom d'utilisateur pour le client
+	if (!nickname.empty() && !username.empty() && password == this->password){
+    	client->setUsername(username);
+    	client->setNickname(nickname);
+    	client->setLogged(true); // Indique que le client est authentifié
+		const char *authentication_message = "Vous êtes bien authentifié!\n";
+        send(socket, authentication_message, strlen(authentication_message), 0);
+    	std::cout << "Client authentifié avec le nickname: " << nickname << " et username: " << username << std::endl;
+	}
+
+}
+
 bool Server::askPassword(int socket)
 {
 	const char *ask_password = "Veuillez entrer le mot de passe:\n";
@@ -194,8 +232,6 @@ bool Server::askPassword(int socket)
 	}
 }
 
-#include <fcntl.h>
-
 void Server::setSocketBlockingMode(int socket, int blocking)
 {
     int flags = fcntl(socket, F_GETFL, 0);
@@ -214,38 +250,58 @@ void Server::handleConnection(int socket) {
     int valread;
 
     while ((valread = recv(socket, buffer, 1024, 0)) > 0) {
+		std::string pass, nick, user;
         std::string received_data(buffer, valread);
+        std::cout << "===received data===" << std::endl << received_data << "===" << std::endl;
 
-		// j'enleve le CRLF
-		// size_t pos;
-        // while ((pos = received_data.find('\r')) != std::string::npos) {
-        //     received_data.erase(pos, 1);
-        // }
-        // while ((pos = received_data.find('\n')) != std::string::npos) {
-        //     received_data.erase(pos, 1);
-        // }
+        // Séparer les commandes basées sur '\r\n' ou '\n' (IRC spécifie \r\n, mais certains clients peuvent utiliser \n seul)
+        std::vector<std::string> commands;
+        size_t pos = 0;
+        while ((pos = received_data.find("\r\n")) != std::string::npos) {
+            commands.push_back(received_data.substr(0, pos));
+            received_data.erase(0, pos + 2); // Effacer la commande traitée
+        }
+        
+        // Gérer chaque commande séparément
+        for (size_t i = 0; i < commands.size(); i++) {
+            std::string command_line = commands[i];
+            std::istringstream iss(command_line);
+            std::string command;
+            std::getline(iss, command, ' '); // Premier token : la commande
 
-        // je recup les cmd
-        // std::string command = received_data.substr(0, received_data.find(' '));
-        // std::string params = received_data.substr(received_data.find(' ') + 1);
-		std::istringstream iss(received_data);
-		std::cout << "received data" << received_data << std::endl;
-        std::string command;
-        std::getline(iss, command, ' '); // Premier token : la commande
+            // Récupérer les paramètres après la commande
+            std::string params;
+            std::getline(iss, params); // Le reste après le premier espace
 
-        // Récupérer les paramètres après la commande
-        std::string params;
-        std::getline(iss, params); // Le reste après le premier espace
+            // Diviser les paramètres en fonction des espaces
+            std::istringstream paramStream(params);
+            std::vector<std::string> paramList;
+            std::string param;
+
+        while (paramStream >> param) {
+            paramList.push_back(param); // Ajoute chaque paramètre dans un vecteur
+        }
 
         if (command == "CAP") {
-            if (params.substr(0, 2) == "LS") {
+            if (!paramList.empty() && paramList[0] == "LS") {
                 handleCapLs(socket);
             }
-        } else if (command == "PASS") {
-            handlePass(socket, params);
+        } else if (command == "PASS" || command == "PASS\r\n") {
+            if (paramList.size() == 1 && paramList[0] != "\0") {
+                handlePass(socket, paramList[0]);
+				pass = paramList[0];
+            } else {
+                std::cerr << "Erreur: PASS nécessite 1 param" << std::endl;
+            }
         } else if (command == "NICK") {
-            handleNick(socket, params);
+            // Vérifier qu'il n'y a qu'un seul paramètre pour NICK
+            if (paramList.size() == 1) {
+                handleNick(socket, paramList[0]);
+            } else {
+                std::cerr << "Erreur: NICK nécessite 1 param" << std::endl;
+            }
         } else if (command == "USER") {
+			// user = param;
             handleUser(socket, params);
         } else if (command == "OPER") {
             handleOper(socket, params);
@@ -266,13 +322,24 @@ void Server::handleConnection(int socket) {
         } else {
             std::cerr << "Commande inconnue: " << command << std::endl;
         }
-
+		// std::cout << "isLogged: " << (getClient(socket)->isLogged() ? "true" : "false") << std::endl;
+		if (!getClient(socket)->isLogged() && !getClient(socket)->getNickname().empty() && !getClient(socket)->getUsername().empty()) {
+			// std::cout << "condition isLogged: " << (getClient(socket)->isLogged() ? "true" : "false") << std::endl;
+			nick = getClient(socket)->getNickname();
+			// std::cout << "nickname handleconnection " + nick << std::endl;
+			// std::cout << "password handleconnection " + pass << std::endl;
+            user = getClient(socket)->getUsername();
+			// std::cout << "nickname handleconnection " + nick << std::endl;
+			authenticateClient(socket, pass, nick, user);
+			// std::cout << "after authentication condition isLogged: " << (getClient(socket)->isLogged() ? "true" : "false") << std::endl;
+        }
         memset(buffer, 0, sizeof(buffer)); // buffer set à 0 pour la prochaine boucle
-    }
-    if (valread == 0) {
-        std::cout << "disconnected" << std::endl;
-        close(socket);
-    } else if (valread < 0) {
-        std::cerr << "Error" << std::endl;
-    }
+		}
+		if (valread == 0) {
+        	std::cout << "disconnected" << std::endl;
+        	close(socket);
+    	} else if (valread < 0) {
+    	std::cerr << "Error" << std::endl;
+    	}
+	}
 }
