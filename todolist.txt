@@ -1,8 +1,12 @@
-Coté server:
-- parsing : les differentes commandes, verifier la validité du port, les users, le channel, les permissions;
-- gérer les signaux;
-- recupérer les events;
-- créer le socket
+la methode d'authentification marche dans cet ordre user/nickname -> password -> logged_in
+faire en sorte que ce soit possible de le faire dans n'importe quel sens ;
 
-Coté Client:
-- revoir les setters et getters
+- handle les autres commandes, verifier le parsing de chaque CMD;
+
+- gérer les signaux;
+
+-vérifier que les fds ferment proprement quand le serveur se ferme;
+
+-maybe gérer l'output pour avoir un meilleur affichage;
+
+-gérer les erreurs également

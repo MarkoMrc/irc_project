@@ -57,11 +57,11 @@ public:
 	void setIp_add(std::string ip_add);
 	void setBuff(std::string buff);
 	/*#METHODS*/
-	 // Nouvelle méthode pour définir si le client est authentifié
-    void setLogged(bool status);
+	 // Nouvelle methode pour definir si le client est authentifie
+	void setLogged(bool status);
 
-    // Méthode pour vérifier si le client est authentifié
-    bool isLogged() const;
+	// Methode pour verifier si le client est authentifie
+	bool isLogged() const;
 };
 
 #endif

@@ -8,7 +8,7 @@ END_COLOR       := \033[0;39m
 
 NAME = ircserv
 CC = c++
-CFLAGS = -g3 #-Wall -Wextra -Werror -std=c++98
+CFLAGS = -g3 -Wall -Wextra -Werror -std=c++98
 
 FILES = srcs/main srcs/Channel srcs/Client srcs/Server srcs/cmd
 OBJDIR = obj

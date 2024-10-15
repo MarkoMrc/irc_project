@@ -12,7 +12,7 @@ Client::Client()
 	this->isOperator = false;
 }
 
-Client::Client(std::string username, std::string nickname, int fd) : username(username), nickname(nickname), fd(fd) {}
+// Client::Client(std::string username, std::string nickname, int fd) : username(username), nickname(nickname), fd(fd) {}
 
 Client::~Client(){}
 
@@ -61,13 +61,17 @@ void Client::setUsername(const std::string& username){
 	this->username = username;
 }
 
-void Client::setBuff(std::string buff){}
+void Client::setBuff(std::string buff){
+	(void) buff;
+}
 
 void Client::setFd(int fd){
 	this->fd = fd;
 }
 
-void Client::setIp_add(std::string ip_add){}
+void Client::setIp_add(std::string ip_add){
+	(void) ip_add;
+}
 
 void Client::setNickname(const std::string& nickname){
 	this->nickname = nickname;
@@ -81,12 +85,10 @@ void Client::setIsOperator(bool isOperator){
 	this->isOperator = isOperator;
 }
 
-// Méthode pour définir l'état de connexion (authentification) du client
 void Client::setLogged(bool status) {
-    this->logged_in = status; // Met à jour le statut d'authentification
+	this->logged_in = status;
 }
 
-// Méthode pour vérifier si le client est connecté (authentifié)
 bool Client::isLogged() const {
-    return this->logged_in;
+	return this->logged_in;
 }
