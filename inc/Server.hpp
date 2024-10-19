@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: emoreau <emoreau@student.42.fr>            +#+  +:+       +#+        */
+/*   By: lebronen <lebronen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/02 09:14:39 by mmaric            #+#    #+#             */
-/*   Updated: 2024/10/11 19:53:45 by emoreau          ###   ########.fr       */
+/*   Updated: 2024/10/19 14:03:44 by lebronen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,6 +92,9 @@ public:
 	void acceptClient();
 	bool isRegistered(int socket);
 	void authenticateClient(int socket, const std::string& password, const std::string& nickname, const std::string& username);
+
+	// methode pour fermer tous les fds
+	void closing_sockets();
 };
 
 #endif

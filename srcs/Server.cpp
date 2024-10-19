@@ -180,6 +180,7 @@ void Server::acceptClient() {
 
 	// rajout du fd socket client a epoll pour surveiller les evenements in
 	struct epoll_event ev;
+	memset(&ev, 0, sizeof(ev));
 	ev.events = EPOLLIN;
 	ev.data.fd = client_socket;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_socket, &ev) == -1) {
@@ -253,6 +254,7 @@ void Server::serv_init(int port, std::string password) {
 
 	// Ajouter le socket serveur a epoll pour surveiller les evenements d'entree
 	struct epoll_event ev;
+	memset(&ev, 0, sizeof(ev));
 	ev.events = EPOLLIN;
 	ev.data.fd = server_socket_fd;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, server_socket_fd, &ev) == -1) {
@@ -403,5 +405,14 @@ void Server::handleConnection(int socket) {
 		epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket, NULL);  // delete epoll socket
 	} else if (valread < 0) {
 		std::cerr << "Erreur de reception sur le socket" << std::endl;
+	}
+}
+
+void Server::closing_sockets()
+{
+	close(server_socket_fd);
+	std::vector<Client>::iterator it;
+	for (it = clients.begin(); it != clients.end(); it++) {
+		close((*it).getFd());
 	}
 }
