@@ -40,8 +40,8 @@ public:
 	#nickname, ip, fd, hostname
 	*/
 	std::string getUsername();
-	std::string getNickname();
-	int getFd();
+	std::string getNickname() const;
+	int getFd() const;
 	std::string getIp_add();
 	std::string getBuff();
 	std::string getHostname();

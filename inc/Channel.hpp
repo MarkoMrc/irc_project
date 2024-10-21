@@ -11,7 +11,11 @@ class Channel
 private:
 	int topic;
 	int key;
-	int max;
+	int limit;
+	bool modeInviteOnly; // Mode +i
+	bool modeTopicOp; // Mode +t
+	bool modePasswordProtected; // Mode +k
+	bool modeLimit; // Mode +l
 	std::string name;
 	std::string password;
 	std::string topic_n;
@@ -26,11 +30,20 @@ public:
 
 
 	void setTopic(int topic);
-	void setKey(int key);
-	void setMax(int max);
 	void setTopic_n(std::string topic_n);
 	void setName(std::string name);
-	void setPassword(std::string password);
+	void setModeInviteOnly(bool value);
+	void setModeTopicOp(bool value);
+	void setModePasswordProtected(bool value);
+	void setModeLimit(bool value);
+	void setPassword(const std::string& pass);
+	void setLimit(int limit);
+
+
+	bool isModeInviteOnly() const { return modeInviteOnly; }
+    bool isModeTopicOp() const { return modeTopicOp; }
+    bool isModePasswordProtected() const { return modePasswordProtected; }
+    bool isModeLimit() const { return modeLimit; }
 
 	std::string getName();
 	std::string getPassword();
@@ -45,6 +58,7 @@ public:
 	void addAdmin(Client new_client);
 	void removeClient(int fd);
 	void removeAdmin(int fd);
+	bool isAdmin(const Client& client) const;
 
 	std::vector<Client>& getClients();
 };

@@ -37,11 +37,11 @@ std::string Client::getUsername(){
 	return this->username;
 }
 
-std::string Client::getNickname(){
+std::string Client::getNickname() const{
 	return this->nickname;	
 }
 
-int Client::getFd(){
+int Client::getFd() const {
 	return this->fd;
 }
 

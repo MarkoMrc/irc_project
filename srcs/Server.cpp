@@ -147,17 +147,17 @@ void Server::authenticateClient(int socket, const std::string& password, const s
 		return;
 	}
 
-    // if (!password.empty() && password != this->password) {
-    //     std::cerr << "Mot de passe incorrect pour le client sur le socket: " << socket << std::endl;
-    //     // close(socket);
-    //     // return;
-    // }
+	// if (!password.empty() && password != this->password) {
+	//	 std::cerr << "Mot de passe incorrect pour le client sur le socket: " << socket << std::endl;
+	//	 // close(socket);
+	//	 // return;
+	// }
 
-    // Definit le pseudonyme et le nom d'utilisateur pour le client
+	// Definit le pseudonyme et le nom d'utilisateur pour le client
 	if (!nickname.empty() && !username.empty() && password == this->password){
-    	client->setUsername(username);
-    	client->setNickname(nickname);
-    	client->setLogged(true); // Indique que le client est authentifie
+		client->setUsername(username);
+		client->setNickname(nickname);
+		client->setLogged(true); // Indique que le client est authentifie
 		const char *authentication_message = "Vous êtes bien authentifie!\n";
 		send(socket, authentication_message, strlen(authentication_message), 0);
 		std::cout << "Client authentifie avec le nickname: " << nickname << " et username: " << username << std::endl;
@@ -198,8 +198,10 @@ void Server::acceptClient() {
 
 // Definir une methode pour rendre un socket non bloquant
 void Server::setSocketBlockingMode(int socket_fd) {
-	int flags = fcntl(socket_fd, F_GETFL, 0);
-	fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK);
+	if (fcntl(socket_fd, F_SETFL, O_NONBLOCK) == -1) {
+		perror("fcntl(F_SETFL a echoué)");
+		exit(EXIT_FAILURE);
+	}
 }
 
 void Server::serv_init(int port, std::string password) {
@@ -286,7 +288,7 @@ void Server::run() {
 			else {
 				int client_socket = events[i].data.fd;
 				handleConnection(client_socket);
-    		}
+			}
 		}
 	}
 }
@@ -296,39 +298,39 @@ void Server::handleConnection(int socket) {
 	int valread = recv(socket, buffer, sizeof(buffer), 0);
 
 	if (valread > 0) {
-		std::string received_data(buffer, valread);
 		std::string pass;
-		std::cout << "===received data===" << std::endl << received_data << "===" << std::endl;
 
 		// Separer les commandes basees sur '\r\n'
 		std::vector<std::string> commands;
-		// while ((pos = received_data.find("\r\n")) != std::string::npos) {
-		//     commands.push_back(received_data.substr(0, pos));
-		//     received_data.erase(0, pos + 2); // Effacer la commande traitee
-		// }
-		while (true) {
-		// trouver la position de la premiere terminaison de ligne
-			size_t crlf_pos = received_data.find("\r\n");
-			size_t lf_pos = received_data.find("\n");
+		size_t crlf_pos, lf_pos;
+		static std::map<int, std::string> partial_data;
+		partial_data[socket] += std::string(buffer, valread);
+		std::string& received_data = partial_data[socket];
+		std::cout << "===received data===" << std::endl << received_data << "===" << std::endl;
 
-			if (crlf_pos == std::string::npos && lf_pos == std::string::npos) {
-				break; 
+	// Boucle pour traiter les commandes complètes
+	while (true) {
+		crlf_pos = received_data.find("\r\n");
+		lf_pos = received_data.find("\n");
+
+		if (crlf_pos == std::string::npos && lf_pos == std::string::npos) {
+			break; // Aucune commande complète, rester dans le buffer
 			}
 
-			// connaitre la position de la premiere terminaison de ligne
-			size_t end_pos;
-			if (crlf_pos != std::string::npos && (lf_pos == std::string::npos || crlf_pos < lf_pos)) {
-				end_pos = crlf_pos; // Utiliser '\r\n'
-			} else {
-				end_pos = lf_pos; // Utiliser '\n'
-			}
-
-			// Ajouter la commande a la liste
-			commands.push_back(received_data.substr(0, end_pos));
-
-			// Effacer la commande traitee
-			received_data.erase(0, end_pos + (received_data[end_pos] == '\r' ? 2 : 1));
+		// Déterminer la position de la terminaison de ligne
+		size_t end_pos;
+		if (crlf_pos != std::string::npos && (lf_pos == std::string::npos || crlf_pos < lf_pos)) {
+			end_pos = crlf_pos;
+		} else {
+			end_pos = lf_pos;
 		}
+
+		// Extraire la commande complète
+		commands.push_back(received_data.substr(0, end_pos));
+
+		// Supprimer la commande traitée du buffer
+		received_data.erase(0, end_pos + (received_data[end_pos] == '\r' ? 2 : 1));
+	}
 
 		// Gerer chaque commande separement
 		for (std::vector<std::string>::iterator it = commands.begin(); it != commands.end(); ++it) {
@@ -368,16 +370,12 @@ void Server::handleConnection(int socket) {
 				}
 			} else if (command == "USER") {
 				handleUser(socket, params);
-			} else if (command == "OPER") {
-				handleOper(socket, params);
 			} else if (command == "MODE") {
 				handleMode(socket, params);
 			} else if (command == "QUIT") {
 				handleQuit(socket);
 			} else if (command == "JOIN") {
 				handleJoin(socket, params);
-			} else if (command == "PART") {
-				handlePart(socket, params);
 			} else if (command == "TOPIC") {
 				handleTopic(socket, params);
 			} else if (command == "KICK") {
@@ -404,7 +402,13 @@ void Server::handleConnection(int socket) {
 		close(socket);
 		epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket, NULL);  // delete epoll socket
 	} else if (valread < 0) {
-		std::cerr << "Erreur de reception sur le socket" << std::endl;
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			return ;
+		else {
+			perror("Erreur de reception sur le socket");
+			close(socket);
+			return;
+		}
 	}
 }
 

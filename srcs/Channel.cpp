@@ -4,7 +4,7 @@ Channel::Channel()
 {
 	this->key = 0;
 	this->topic = 0;
-	this->max = 0;
+	this->limit = 0;
 	this->name = "";
 	this->topic_n = "";
 }
@@ -19,7 +19,7 @@ Channel &Channel::operator=(Channel const &src){
 	if(this != &src){
 		this->key = src.key;
 		this->topic = src.topic;
-		this->max = src.max;
+		this->limit = src.limit;
 		this->name = src.name;
 		this->topic_n = src.topic_n;
 	}
@@ -30,14 +30,6 @@ void Channel::setTopic(int topic){
 	this->topic = topic;
 }
 
-void Channel::setKey(int key){
-	this->key = key;
-}
-
-void Channel::setMax(int max){
-	this->max = max;
-}
-
 void Channel::setTopic_n(std::string topic_n){
 	this->topic_n = topic_n;
 }
@@ -45,11 +37,6 @@ void Channel::setTopic_n(std::string topic_n){
 void Channel::setName(std::string name){
 	this->name = name;
 }
-
-void Channel::setPassword(std::string password){
-	this->password = password;
-}
-
 
 std::string Channel::getTopic_N(){
 	return this->topic_n;
@@ -67,9 +54,30 @@ int Channel::getTopic(){
 	return this->topic;
 }
 
-int Channel::getMax(){
-	return this->max;
+void Channel::setModeInviteOnly(bool value){ 
+	modeInviteOnly = value;
 }
+
+void Channel::setModeTopicOp(bool value){
+	modeTopicOp = value;
+}
+
+void Channel::setModePasswordProtected(bool value){
+	modePasswordProtected = value;
+}
+
+void Channel::setModeLimit(bool value){
+	modeLimit = value;
+}
+
+void Channel::setPassword(const std::string& pass){
+	password = pass;
+}
+
+void Channel::setLimit(int limit){
+	limit = limit;
+}
+
 int Channel::getClient_N(){
 	return this->clients.size() + this->admins.size();
 }
@@ -99,6 +107,16 @@ void Channel::addAdmin(Client new_client){
 	admins.push_back(new_client);
 }
 
+bool Channel::isAdmin(const Client& client) const {
+    // Parcourir la liste des opérateurs et vérifier si le client est présent
+    for (std::vector<Client>::const_iterator it = admins.begin(); it != admins.end(); ++it) {
+        if (it->getFd() == client.getFd()) {
+            return true; // Le client est un opérateur
+        }
+    }
+    return false; // Le client n'est pas un opérateur
+}
+
 void Channel::removeClient(int fd){
 	for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it)
 	{
@@ -123,5 +141,5 @@ void Channel::removeAdmin(int fd){
 }
 
 std::vector<Client>& Channel::getClients() {
-    return clients;
+	return clients;
 }
