@@ -259,3 +259,8 @@ void Server::handlePrivmsg(int socket, const std::string& params) {
 		std::cout << "Message from " << client->getNickname() << " to " << target << ": " << message << std::endl;
 	}
 }
+
+void Server::handleOper(int socket, const std::string& params) {
+    std::cout << "Commande TOPIC reçue avec params: " << params << std::endl;
+	(void) socket;
+}
