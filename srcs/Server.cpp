@@ -293,6 +293,10 @@ void Server::run() {
 }
 
 void Server::handleConnection(int socket) {
+	bool fc = true;
+	bool fcn = true;
+	bool fcu = true;
+	Client *client = getClient(socket);
 	char buffer[1024] = {0};
 	int valread = recv(socket, buffer, sizeof(buffer), 0);
 
@@ -356,19 +360,38 @@ void Server::handleConnection(int socket) {
 				}
 			} else if (command == "PASS") {
 				if (paramList.size() == 1) {
-					handlePass(socket, paramList[0]);
+					fc = fcn && fcu;
+					std::cout << "nick = " << client->getTmpNick() << std::endl;
+					handlePass(socket, paramList[0], fc, client->getTmpNick(), client->getTmpUser());
 					pass = paramList[0];
+					fc = false;
 				} else {
 					std::cerr << "Erreur: PASS necessite 1 param" << std::endl;
 				}
 			} else if (command == "NICK") {
+				std::cout << "commande NICK" << std::endl;
 				if (paramList.size() == 1) {
-					handleNick(socket, paramList[0]);
+					if (fcn) {
+
+						client->setTmpNick(paramList[0]);
+						fcn = false;
+						const char *msg = "Veuillez entrer le mot de passe (PASS mdp) \r\n";
+						send(socket, msg, strlen(msg), 0);
+					}
+					else
+						handleNick(socket, paramList[0]);
 				} else {
 					std::cerr << "Erreur: NICK necessite 1 param" << std::endl;
 				}
 			} else if (command == "USER") {
-				handleUser(socket, params);
+				if (fcu) {
+					client->setTmpUser(params);
+					fcu = false;
+				}
+				else
+					handleUser(socket, params);
+			} else if (command == "OPER") {
+				handleOper(socket, params);
 			} else if (command == "MODE") {
 				handleMode(socket, params);
 			} else if (command == "QUIT") {

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lebronen <lebronen@student.42.fr>          +#+  +:+       +#+        */
+/*   By: rshay <rshay@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/02 09:14:39 by mmaric            #+#    #+#             */
-/*   Updated: 2024/10/19 14:03:44 by lebronen         ###   ########.fr       */
+/*   Updated: 2024/10/21 16:58:33 by rshay            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@ private:
 	int server_socket_fd;
 	int epoll_fd;
 	void handleCapLs(int socket);
-	void handlePass(int socket, const std::string& params);
+	void handlePass(int socket, const std::string& params, bool firstConnexion, std::string nick, std::string user);
 	void handleNick(int socket, const std::string& params);
 	void handleUser(int socket, const std::string& params);
 	void handleOper(int socket, const std::string& params);
@@ -79,7 +79,7 @@ public:
 	void setPassword(std::string password);
 	void addClient(Client new_client);
 	void addChannel(Channel new_channel);
-	
+
 	void serv_init(int port, std::string password);
 
 	/* methodes test de elias*/

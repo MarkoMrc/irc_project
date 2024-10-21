@@ -13,7 +13,7 @@ void Server::handleCapLs(int socket) {
 	// std::cout << "CAP LS" << std::endl;
 }
 
-void Server::handlePass(int socket, const std::string& params) {
+void Server::handlePass(int socket, const std::string& params, bool firstConnexion, std::string nick, std::string user) {
 	if (params[0] != ' ') {
 		std::string client_password = params.substr(0, params.find(' '));
 		std::cout << "Commande PASS reçue avec params: " << params << std::endl;
@@ -26,6 +26,15 @@ void Server::handlePass(int socket, const std::string& params) {
 			client->setPswdEnterd(true);
 			const char *msg = "Mot de passe correct. Connexion acceptee.\r\n";
 			send(socket, msg, strlen(msg), 0);
+			if (firstConnexion)
+			{
+				handleNick(socket, nick);
+				handleUser(socket, user);
+			}
+			else {
+				(void)nick;
+				(void)user;
+			}
 		}
 		else {
 			std::cout << "Mot de passe incorrect." << std::endl;
@@ -40,24 +49,18 @@ void Server::handleNick(int socket, const std::string& params) {
 	std::cout << "Commande NICK reçue avec params: " << params << std::endl;
 
 	Client *client = getClient(socket);
-	if (client->isPswdEnterd()) {
-		if (!client){
-			std::cout << "erreur !client : "<< getClient(socket) << std::endl;
-		};
-
-		client->setNickname(params);  // Met a jour le surnom du client
-		std::cout << "Client socket " << socket << " set nickname to: " << client->getNickname() << std::endl;
+	if (!client){
+		std::cout << "erreur !client : "<< getClient(socket) << std::endl;
 	}
-	else {
-		const char * msg = "Veuillez d'abord entrer le mot de passe (PASS mdp) \n";
-		send(socket, msg, strlen(msg), 0);
-	}
+	client->setNickname(params);  // Met a jour le surnom du client
+	std::cout << "Client socket " << socket << " set nickname to: " << client->getNickname() << std::endl;
 
 }
 
 
 void Server::handleUser(int socket, const std::string& params) {
 	std::cout << "Commande USER reçue avec params: " << params << std::endl;
+
 	std::istringstream iss(params);
 	std::string nickname, hostname, servername, username;
 

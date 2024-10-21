@@ -57,6 +57,14 @@ std::string Client::getHostname(){
 	return this->hostname;
 }
 
+std::string Client::getTmpNick() {
+	return this->tmp_nick;
+}
+
+std::string Client::getTmpUser() {
+	return this->tmp_user;
+}
+
 void Client::setUsername(const std::string& username){
 	this->username = username;
 }
@@ -81,6 +89,14 @@ void Client::setHostname(const std::string& hostname){
 	this->hostname = hostname;
 }
 
+void Client::setTmpNick(const std::string& tmp_nick) {
+	this->tmp_nick = tmp_nick;
+}
+
+void Client::setTmpUser(const std::string& tmp_user) {
+	this->tmp_user = tmp_user;
+}
+
 void Client::setIsOperator(bool isOperator){
 	this->isOperator = isOperator;
 }
@@ -92,6 +108,7 @@ void Client::setLogged(bool status) {
 void Client::setPswdEnterd(bool status) {
 	this->pswd_entered = status;
 }
+
 
 bool Client::isLogged() const {
 	return this->logged_in;
