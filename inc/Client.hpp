@@ -6,7 +6,7 @@
 /*   By: rshay <rshay@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/02 09:14:43 by mmaric            #+#    #+#             */
-/*   Updated: 2024/10/21 15:04:06 by rshay            ###   ########.fr       */
+/*   Updated: 2024/10/21 17:13:33 by rshay            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,8 @@ private:
 	int fd;
 	std::string username;
 	std::string nickname;
+	std::string tmp_nick;
+	std::string tmp_user;
 	std::string ip_add;
 	std::string buff;
 	std::string hostname;
@@ -46,12 +48,16 @@ public:
 	std::string getIp_add();
 	std::string getBuff();
 	std::string getHostname();
+	std::string getTmpNick();
+	std::string getTmpUser();
 
 	/*##SETTERS##
 	#nickname, fd, ip
 	*/
 	void setUsername(const std::string& username);
 	void setNickname(const std::string& nickname);
+	void setTmpNick(const std::string& tmp_nick);
+	void setTmpUser(const std::string& tmp_user);
 	void setHostname(const std::string& hostname);
 	void setIsOperator(bool isOperator);
 	void setFd(int fd);
