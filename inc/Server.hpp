@@ -32,6 +32,7 @@
 #include <cstdlib>
 #include "Channel.hpp"
 #include "Client.hpp"
+#include <map>
 
 #define MAX_EVENTS 10
 

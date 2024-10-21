@@ -83,12 +83,6 @@ void Server::handleUser(int socket, const std::string& params) {
 	}
 }
 
-
-void Server::handleOper(int socket, const std::string& params) {
-	std::cout << "Commande OPER reçue avec params: " << params << std::endl;
-	(void) socket;
-}
-
 void Server::handleMode(int socket, const std::string& params) {
 	std::cout << "Commande MODE reçue avec params: " << params << std::endl;
 	(void) socket;
@@ -112,25 +106,107 @@ void Server::handleQuit(int socket) {
 	std::cout << "Client " << client->getNickname() << " has quit." << std::endl;
 	const char *msg = "You quit.\r\n";
 	send(socket, msg, strlen(msg), 0);
-	close(socket);  // Fermer le socket du client
+	close(socket);
 }
 
 void Server::handleJoin(int socket, const std::string& params) {
-	if (params == "")
-		std::cerr << "Pas assez de paramètres fournis pour la commande JOIN." << std::endl;
 	std::cout << "Commande JOIN reçue avec params: " << params << std::endl;
-	(void) socket;
-}
 
-void Server::handlePart(int socket, const std::string& params) {
-	std::cout << "Commande PART reçue avec params: " << params << std::endl;
-	(void) socket;
+	Client *client = getClient(socket);
+	if (!client) {
+	std::cerr << "Client not found for socket: " << socket << std::endl;
+	return;
+	}
+
+	std::istringstream iss(params);
+	std::string channel_name;
+	iss >> channel_name;
+
+	if (channel_name.empty() || channel_name[0] != '#') {
+	std::cerr << "Invalid channel name: " << channel_name << std::endl;
+	return;
+	}
+
+	// Verifier si le cchannel exsite deja, sinon creer nouveau channel
+	Channel *channel = getChannel(channel_name);
+	if (!channel) {
+	// il faut le creer
+	Channel new_channel;
+	new_channel.setName(channel_name);
+	new_channel.addAdmin(*client);
+	addChannel(new_channel);
+	channel = getChannel(channel_name);
+	std::cout << "Created new channel: " << channel_name << std::endl;
+	}
+
+	const std::vector<Client>& clients = channel->getClients();
+    for (std::vector<Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+        if (it->getFd() == client->getFd()) {
+            std::cerr << client->getNickname() << " is already in channel " << channel_name << std::endl;
+            return;
+        }
+    }
+
+	channel->addClient(*client);
+	std::cout << client->getNickname() << " joined channel " << channel_name << std::endl;
+
+	// message de confirmation
+	std::string join_message = ":" + client->getNickname() + " JOIN " + channel_name + "\r\n";
+	send(socket, join_message.c_str(), join_message.length(), 0);
+
+	// // Envoyer la liste des utilisateurs actuels du channel au client qui vient de rejoindre
+	std::string names_list = "= " + channel_name + " :";
+	for (std::vector<Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+		names_list += it->getNickname() + " ";
+	}
+
+	names_list += "\r\n";
+	send(socket, names_list.c_str(), names_list.length(), 0);
+
+	// Envoyer le sujet du channel
+	std::string topic_message = ":" + channel_name + " TOPIC :" + channel->getTopic_N() + "\r\n";
+	send(socket, topic_message.c_str(), topic_message.length(), 0);
 }
 
 void Server::handleTopic(int socket, const std::string& params) {
-	std::cout << "Commande TOPIC reçue avec params: " << params << std::endl;
-	(void) socket;
+    std::cout << "Commande TOPIC reçue avec params: " << params << std::endl;
+
+    Client *client = getClient(socket);
+    if (!client) return;
+
+    std::istringstream iss(params);
+    std::string channel_name, topic;
+    iss >> channel_name;
+    getline(iss, topic);  // Le reste de la ligne après le nom du canal est le sujet
+
+    Channel *channel = getChannel(channel_name);
+    if (channel) {
+        if (!topic.empty()) { // Vérifie si un nouveau sujet a été fourni
+            channel->setTopic_n(topic);
+            std::cout << "Topic for channel " << channel_name << " set to: " << topic << std::endl;
+
+            std::string topic_message = ":" + client->getNickname() + " TOPIC " + channel_name + " :" + topic + "\r\n";
+
+            // Envoyer le message à tous les clients dans le canal
+            const std::vector<Client>& clients = channel->getClients();
+            for (std::vector<Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+                send(it->getFd(), topic_message.c_str(), topic_message.length(), 0);
+            }
+        } else { // Si aucun nouveau sujet n'est fourni, envoyer le sujet actuel
+            std::string topic_name = channel->getTopic_N();
+            std::string topic_message = ":" + client->getNickname() + " TOPIC " + channel_name + " :" + topic_name + "\r\n";
+
+            // Envoyer le message à tous les clients dans le canal
+            const std::vector<Client>& clients = channel->getClients();
+            for (std::vector<Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+                send(it->getFd(), topic_message.c_str(), topic_message.length(), 0);
+            }
+        }
+    } else {
+        std::cerr << "Channel " << channel_name << " not found." << std::endl;
+    }
 }
+
 
 void Server::handleKick(int socket, const std::string& params) {
 	std::cout << "Commande KICK reçue avec params: " << params << std::endl;
@@ -139,5 +215,47 @@ void Server::handleKick(int socket, const std::string& params) {
 
 void Server::handlePrivmsg(int socket, const std::string& params) {
 	std::cout << "Commande PRIVMSG reçue avec params: " << params << std::endl;
-	(void) socket;
+
+	Client *client = getClient(socket);
+	if (!client) {
+		std::cerr << "Client not found for socket: " << socket << std::endl;
+		return;
+	}
+
+	std::istringstream iss(params);
+	std::string target;
+	iss >> target;
+
+	std::string message = params.substr(target.length() + 1);  // Extraire le message apres le destinataire
+
+	if (target[0] == '#') {  // Si le message est destine a un channel
+		Channel *channel = getChannel(target);
+		if (!channel) {
+			std::cerr << "Channel " << target << " not found." << std::endl;
+			return;
+		}
+
+		// Envoyer le message a tous les clients dans le channel, sauf l'expediteur
+		std::string formatted_message = ":" + client->getNickname() + " PRIVMSG " + target + " :" + message + "\r\n";
+		std::vector<Client>::iterator it;
+		for (it = channel->getClients().begin(); it != channel->getClients().end(); ++it) {
+			if (it->getFd() != client->getFd()) {
+				send(it->getFd(), formatted_message.c_str(), formatted_message.length(), 0);
+			}
+		}
+
+		std::cout << "Message from " << client->getNickname() << " to channel " << target << ": " << message << std::endl;
+	} else {  // Si le message est destine a un utilisateur
+		Client *target_client = getClient(target);
+		if (!target_client) {
+			std::cerr << "Client " << target << " not found." << std::endl;
+			return;
+		}
+		std::cout << "Client " << target << std::endl;
+
+		// Envoyer le message a l'utilisateur cible
+		std::string formatted_message = ":" + client->getNickname() + " PRIVMSG " + target + " :" + message + "\r\n";
+		send(target_client->getFd(), formatted_message.c_str(), formatted_message.length(), 0);
+		std::cout << "Message from " << client->getNickname() << " to " << target << ": " << message << std::endl;
+	}
 }
