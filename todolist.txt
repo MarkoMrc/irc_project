@@ -10,3 +10,26 @@ faire en sorte que ce soit possible de le faire dans n'importe quel sens ;
 -maybe gérer l'output pour avoir un meilleur affichage;
 
 -gérer les erreurs également
+
+-gerer les admins (mode)
+
+-parsing des commandes : () quand c'est optionnel
+	JOIN : JOIN #nom_du_chann (#nom_du_chann2) mdp (mdp2)
+	NICK : NICK nickname
+	USER : USER username hostname servername :realname
+	QUIT : QUIT "avec la raison en param"
+	MODE : MODE #nom_du_chann key (nickname en focntion de la commande)
+	TOPIC: TOPIC #nom_du_chann (nom_du_topic)
+	INVITE: INVITE nickname #nom_du_chann
+	KICK : KICK #nom_du_chann nickname
+	PRIVMSG : nickname "message" / #nom_du_chann "message"
+
+-check pour ces commandes:
+	USER : verifier qu'il n'existe pas déjà, qu'il y a suffisament de params
+	NICK : verifier qu'il y a bien un nickname, verifier qu'il n'est pas utilisé, verifier que les charactere présents dans le nickname sont ok
+	JOIN : avant de rejoindre : verifier la limite de client, verifier s'il y un mdp, si le mdp est le bon, vérifier si c'est sur invitation, vérifier que le chann existe
+	MODE : verifier si le client peut définir un mdp (admin), s'il peut définir/supprimer la restiction de la commande TOPIC, s'il peut donner/retirer le priviliège opérateur, s'il peut définir la limite de client sur le chann
+	TOPIC : need more params, verifier que le chann existe, verifier qu'on appartient au chann, verifier si le client peut changer le TOPIC
+	KICK : verifier qu'il y a le bon nombre de params, verifier que le user est admin, que le user est dans le channel, que la target est bien dans le channel, que le channel exite bien 
+	INVITE : il faut etre dans le channel pour inviter un user ainsi qu'etre admin, il faut que le user existe
+	PRIVMSG : verifier que le user existe, que le message n'est pas vide, si ça s'adresse au chann verifier qu'on est dedans
