@@ -172,7 +172,6 @@ void Server::acceptClient() {
 		std::cerr << "Erreur lors de accept()" << std::endl;
 		return;
 	}
-
 	std::cout << "Nouvelle connexion acceptee, socket client : " << client_socket << std::endl;
 
 	// Rendre le socket client non bloquant
@@ -191,7 +190,7 @@ void Server::acceptClient() {
 	// Creer un nouvel objet Client avec le socket
 	Client new_client;
 	new_client.setFd(client_socket);  // Setter pour definir le socket du client
-
+	new_client.setPswdEnterd(false);
 	// Ajouter le client a la liste des clients du serveur
 	addClient(new_client);
 }
