@@ -22,6 +22,8 @@ void Server::handlePass(int socket, const std::string& params) {
 		// std::cout << "mdp " << mdp << std::endl;
 		if (client_password == mdp) {
 			std::cout << "Mot de passe correct." << std::endl;
+			Client *client = getClient(socket);
+			client->setPswdEnterd(true);
 			const char *msg = "Mot de passe correct. Connexion acceptee.\r\n";
 			send(socket, msg, strlen(msg), 0);
 		}
@@ -36,13 +38,21 @@ void Server::handlePass(int socket, const std::string& params) {
 
 void Server::handleNick(int socket, const std::string& params) {
 	std::cout << "Commande NICK reçue avec params: " << params << std::endl;
-	Client *client = getClient(socket);
-	if (!client){
-		std::cout << "erreur !client : "<< getClient(socket) << std::endl;
-	};
 
-	client->setNickname(params);  // Met a jour le surnom du client
-	std::cout << "Client socket " << socket << " set nickname to: " << client->getNickname() << std::endl;
+	Client *client = getClient(socket);
+	if (client->isPswdEnterd()) {
+		if (!client){
+			std::cout << "erreur !client : "<< getClient(socket) << std::endl;
+		};
+
+		client->setNickname(params);  // Met a jour le surnom du client
+		std::cout << "Client socket " << socket << " set nickname to: " << client->getNickname() << std::endl;
+	}
+	else {
+		const char * msg = "Veuillez d'abord entrer le mot de passe (PASS mdp) \n";
+		send(socket, msg, strlen(msg), 0);
+	}
+
 }
 
 
@@ -103,6 +113,8 @@ void Server::handleQuit(int socket) {
 }
 
 void Server::handleJoin(int socket, const std::string& params) {
+	if (params == "")
+		std::cerr << "Pas assez de paramètres fournis pour la commande JOIN." << std::endl;
 	std::cout << "Commande JOIN reçue avec params: " << params << std::endl;
 	(void) socket;
 }

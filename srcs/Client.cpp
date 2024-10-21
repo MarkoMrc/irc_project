@@ -38,7 +38,7 @@ std::string Client::getUsername(){
 }
 
 std::string Client::getNickname(){
-	return this->nickname;	
+	return this->nickname;
 }
 
 int Client::getFd(){
@@ -89,6 +89,14 @@ void Client::setLogged(bool status) {
 	this->logged_in = status;
 }
 
+void Client::setPswdEnterd(bool status) {
+	this->pswd_entered = status;
+}
+
 bool Client::isLogged() const {
 	return this->logged_in;
+}
+
+bool Client::isPswdEnterd() const {
+	return this->pswd_entered;
 }

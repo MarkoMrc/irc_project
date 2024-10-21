@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmaric <mmaric@student.42.fr>              +#+  +:+       +#+        */
+/*   By: rshay <rshay@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/02 09:14:43 by mmaric            #+#    #+#             */
-/*   Updated: 2024/10/02 09:14:43 by mmaric           ###   ########.fr       */
+/*   Updated: 2024/10/21 15:04:06 by rshay            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,8 @@ private:
 	bool isOperator;
 	bool registered;
 	bool logged_in;
-	
+	bool pswd_entered;
+
 public:
 	Client();
 	Client(std::string username, std::string nickname, int fd);
@@ -59,9 +60,11 @@ public:
 	/*#METHODS*/
 	 // Nouvelle methode pour definir si le client est authentifie
 	void setLogged(bool status);
+	void setPswdEnterd(bool status);
 
 	// Methode pour verifier si le client est authentifie
 	bool isLogged() const;
+	bool isPswdEnterd() const;
 };
 
 #endif
