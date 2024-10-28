@@ -117,6 +117,15 @@ bool Channel::isAdmin(const Client& client) const {
     return false; // Le client n'est pas un opérateur
 }
 
+bool Channel::isClient(const Client& client) const {
+	for (std::vector<Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+		if (it->getFd() == client.getFd()) {
+			return true;
+		}
+	}
+	return false;
+}
+
 void Channel::removeClient(int fd){
 	for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it)
 	{
@@ -139,6 +148,7 @@ void Channel::removeAdmin(int fd){
 		}
 	}
 }
+
 
 std::vector<Client>& Channel::getClients() {
 	return clients;

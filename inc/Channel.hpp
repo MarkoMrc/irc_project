@@ -59,6 +59,7 @@ public:
 	void removeClient(int fd);
 	void removeAdmin(int fd);
 	bool isAdmin(const Client& client) const;
+	bool isClient(const Client& client) const;
 
 	std::vector<Client>& getClients();
 };

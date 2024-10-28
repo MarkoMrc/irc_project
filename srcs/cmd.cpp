@@ -85,7 +85,149 @@ void Server::handleUser(int socket, const std::string& params) {
 
 void Server::handleMode(int socket, const std::string& params) {
 	std::cout << "Commande MODE reçue avec params: " << params << std::endl;
-	(void) socket;
+	std::vector<std::string> words;
+	std::istringstream iss(params);
+	std::string word;
+
+	while (iss >> word)
+	{
+		words.push_back(word);
+	}
+	Client *client = getClient(socket);
+	Channel *channel = getChannel(words[0]);
+	if (!channel) {
+		std::cerr << "Erreur: le channel spécifié n'existe pas" << std::endl;
+	}
+	if (!channel->isAdmin(*client)) {
+		std::cerr << "Erreur: permission non accordée car vous n'êtes pas opérateur sur ce channel" << std::endl;
+	}
+	if (words[1] == "+o" || words[1] == "-o") {
+		if (words.size() < 3) {
+			std::cerr << "Erreur: le mode +/- o nécessite 3 paramètres (MODE channel mode nom_d_utilisateur)" << std::endl;
+		}
+		else {
+			Client *mod = getClient(words[2]);
+			if (!channel->isClient(*mod)) {
+				std::cerr << "le client" << words[2] << "n'appartient pas au channel spécifié" << std::endl;
+			}
+			else {
+				if (words[1] == "+o") {
+					if (channel->isAdmin(*mod)) {
+						std::cerr << "Erreur: le client spécifié est déja opérateur" << std::endl;
+					}
+					else {
+						channel->addAdmin(*mod);
+					}
+				}
+				else {
+					if (!channel->isAdmin(*mod)) {
+						std::cerr << "Erreur : le client spécifié n'est pas opérateur" << std::endl;
+					}
+					else {
+						channel->removeAdmin(mod->getFd());
+					}
+				}
+			}
+		}
+	}
+	else if (words[1] == "+i") {
+		if (words.size() != 2) {
+			std::cerr << "le mode +/- i nécessite 2 paramètres (channel mode)" << std::endl;
+		}
+		else {
+			if (channel->isModeInviteOnly()) {
+				std::cerr << "le channel spécifié est déjà sur invitation uniquement" << std::endl;
+			}
+			else {
+				channel->setModeInviteOnly(true);
+			}
+		}
+	}
+	else if (words[1] == "-i") {
+		if (words.size() != 2) {
+			std::cerr << "Erreur: le mode +/- i nécessite 2 paramètres (MODE channel mode)" << std::endl;
+		}
+		else {
+			if (!channel->isModeInviteOnly()) {
+				std::cerr << "Erreur: le channel spécifié n'est pas sur invitation uniquement" << std::endl;
+			}
+			else {
+				channel->setModeInviteOnly(false);
+			}
+		}
+	}
+	else if (words[1] == "+t") {
+		if (words.size() != 2) {
+			std::cerr << "Erreur: le mode +t nécessite 2 paramètres (channel mode)" << std::endl;
+		}
+		else {
+			channel->setModeTopicOp(true);
+		}
+	}
+	else if (words[1] == "-t") {
+		if (words.size() != 2) {
+			std::cerr << "Erreur: le mode +t nécessite 2 paramètres (channel mode)" << std::endl;
+		}
+		else {
+			if (!channel->isModeTopicOp()) {
+				std::cerr << "Erreur: le channel spécifié n'a pas de restriction sue la commande TOPIC" << std::endl;
+			}
+			else {
+				channel->setModeTopicOp(false);
+			}
+		}
+	}
+	else if (words[1] == "+k") {
+		if (words.size() != 3) {
+			std::cerr << "Erreur: le mode +k nécessite 3 paramètres (channel mode password)" << std::endl;
+		}
+		else {
+			if (!channel->isModePasswordProtected()) {
+				channel->setModePasswordProtected(true);
+			}
+			channel->setPassword(words[2]);
+		}
+	}
+	else if (words[1] == "-k") {
+		if (words.size() != 2) {
+			std::cerr << "Erreur: le mode -k nécessite 2 paramètres (channel mode)" << std::endl;
+		}
+		else {
+			if (!channel->isModePasswordProtected()) {
+				std::cerr << "Erreur: ce channel n'a pas de mot de passe" << std::endl;
+			}
+			else {
+				channel->setModePasswordProtected(false);
+			}
+		}
+	}
+	else if (words[1] == "+l") {
+		if (words.size() != 3) {
+			std::cerr << "Erreur: le mode +l nécessite 3 paramètres (channel mode nbLimite)" << std::endl;
+		}
+		else {
+			if (!channel->isModeLimit()) {
+				channel->setModeLimit(true);
+			}
+			channel->setLimit(stoi(words[2]));
+		}
+	}
+	else if (words[1] == "-l") {
+		if (words.size() != 2) {
+			std::cerr << "Erreur: le mode -l nécessite 2 paramètres (channel mode)" << std::endl;
+		}
+		else {
+			if (!channel->isModeLimit()) {
+				std::cerr << "Erreur: ce channel n'est pas limité" << std::endl;
+			}
+			else {
+				channel->setModeLimit(false);
+			}
+		}
+	}
+	else {
+		std::cerr << "Erreur: mode inconnu" << std::endl;
+	}
 }
 
 void Server::handleQuit(int socket) {

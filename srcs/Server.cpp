@@ -393,7 +393,11 @@ void Server::handleConnection(int socket) {
 			} else if (command == "OPER") {
 				handleOper(socket, params);
 			} else if (command == "MODE") {
-				handleMode(socket, params);
+				if (paramList.size() < 2) {
+					std::cerr << "Erreur: MODE nécessite au moins 2 paramètres" << std::endl;
+				} else {
+					handleMode(socket, params);
+				}
 			} else if (command == "QUIT") {
 				handleQuit(socket);
 			} else if (command == "JOIN") {
