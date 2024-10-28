@@ -109,31 +109,70 @@ void Server::handleQuit(int socket) {
 	close(socket);
 }
 
+
+std::vector<std::string> split(const std::string& str, char delimiter)
+{
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream tokenStream(str);
+    while (std::getline(tokenStream, token, delimiter)) {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
+std::vector<std::string> Server::parsJoin(const std::string& params)
+{
+	std::vector<std::string> param = split(params, ' ');
+	// std::string arg[2];
+	if (param.size() > 2)
+		return std::vector<std::string>();
+	else
+		return param;
+	// for (int i = 0; i < 2; i++)
+		// arg[i] = split(param[i], ',');
+}
+
 void Server::handleJoin(int socket, const std::string& params) {
 	std::cout << "Commande JOIN reçue avec params: " << params << std::endl;
 
+	std::vector<std::string> arg;
+	// parsing de join
+	arg = parsJoin(params);
+	if (arg.empty())
+	{
+		std::cerr << "parametre vide " << socket << std::endl;
+		return;
+	}
 	Client *client = getClient(socket);
-	if (!client) {
-	std::cerr << "Client not found for socket: " << socket << std::endl;
-	return;
-	}
-
-	std::istringstream iss(params);
+	if (!client)
+	{
+		std::cerr << "Client not found for socket: " << socket << std::endl;
+		return;
+	} 
+	std::istringstream iss(arg[0]);
 	std::string channel_name;
-	iss >> channel_name;
 
-	if (channel_name.empty() || channel_name[0] != '#') {
-	std::cerr << "Invalid channel name: " << channel_name << std::endl;
-	return;
+	iss >> channel_name;
+	if (channel_name.empty() || channel_name[0] != '#')
+	{
+		std::cerr << "Invalid channel name: " << channel_name << std::endl;
+		return;
 	}
 
-	// Verifier si le cchannel exsite deja, sinon creer nouveau channel
+	// Verifier si le channel exsite deja, sinon creer nouveau channel
 	Channel *channel = getChannel(channel_name);
 	if (!channel) {
 	// il faut le creer
 	Channel new_channel;
 	new_channel.setName(channel_name);
 	new_channel.addAdmin(*client);
+	std::cout << "arg size == " << arg.size() << std::endl;
+	if (arg.size() == 2)
+	{
+		new_channel.setModePasswordProtected(true);
+		new_channel.setPassword(arg[1]);
+	}
 	addChannel(new_channel);
 	channel = getChannel(channel_name);
 	std::cout << "Created new channel: " << channel_name << std::endl;
@@ -146,7 +185,13 @@ void Server::handleJoin(int socket, const std::string& params) {
             return;
         }
     }
-
+	std::cout << "chanel : " << channel->isModePasswordProtected() << " size : " << arg.size() << " password : " << channel->getPassword() << " arg : " << arg[1] << std::cout;
+	// verification du mot de pass
+	if (channel->isModePasswordProtected() && (arg.size() < 2 || arg[1] != channel->getPassword()))
+	{
+		std::cout << "error password" << std::endl;
+		return;
+	}
 	channel->addClient(*client);
 	std::cout << client->getNickname() << " joined channel " << channel_name << std::endl;
 

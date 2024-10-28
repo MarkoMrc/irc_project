@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rshay <rshay@student.42.fr>                +#+  +:+       +#+        */
+/*   By: elias <elias@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/02 09:14:39 by mmaric            #+#    #+#             */
-/*   Updated: 2024/10/21 16:58:33 by rshay            ###   ########.fr       */
+/*   Updated: 2024/10/28 21:36:47 by elias            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,6 +60,8 @@ private:
 	void handleTopic(int socket, const std::string& params);
 	void handleKick(int socket, const std::string& params);
 	void handlePrivmsg(int socket, const std::string& params);
+	// std::vector<std::string> split(const std::string& str, char delimiter);
+	std::vector<std::string> parsJoin(const std::string& params);
 
 public:
 	Server(/* args */);
