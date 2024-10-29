@@ -173,7 +173,7 @@ void Server::handleJoin(int socket, const std::string& params) {
 	addChannel(new_channel);
 	std::cout << "arg size == " << arg.size() << std::endl;
 	std::cout << "arg 0 == " << arg[0] << std::endl;
-	std::cout << "arg 1 == " << arg[1] << std::endl;
+	// std::cout << "arg 1 == " << arg[1] << std::endl;
 	if (arg.size() == 2)
 	{
 		new_channel->setModePasswordProtected(true);
@@ -192,7 +192,7 @@ void Server::handleJoin(int socket, const std::string& params) {
             return;
         }
     }
-	std::cout << "channel : " << channel->isModePasswordProtected() << " size : " << arg.size() << " password : " << channel->getPassword() << " arg : " << arg[1] << std::endl;
+	// std::cout << "channel : " << channel->isModePasswordProtected() << " size : " << arg.size() << " password : " << channel->getPassword() << " arg : " << arg[1] << std::endl;
 	// verification du mot de pass
 	if (channel->isModePasswordProtected() && (arg.size() < 2 || arg[1] != channel->getPassword()))
 	{

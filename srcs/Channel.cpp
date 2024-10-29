@@ -7,6 +7,7 @@ Channel::Channel()
 	this->limit = 0;
 	this->name = "";
 	this->topic_n = "";
+	this->modePasswordProtected = false;
 }
 
 Channel::~Channel(){}
