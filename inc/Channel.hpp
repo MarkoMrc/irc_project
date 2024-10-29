@@ -46,7 +46,7 @@ public:
     bool isModeLimit() const { return modeLimit; }
 
 	std::string getName();
-	std::string getPassword();
+	std::string getPassword() const;
 	std::string getTopic_N();
 	int getTopic();
 	int getMax();

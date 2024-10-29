@@ -4,7 +4,9 @@ Server::Server(/* args */){
 	this->server_socket_fd = -1;
 }
 
-Server::~Server(){}
+Server::~Server(){
+	//ajouter methode nettoyage Channel
+}
 
 Server::Server(Server const &src){
 	*this = src;
@@ -53,8 +55,8 @@ Client* Server::getClient(const std::string& nickname) {
 Channel *Server::getChannel(std::string name){
 	for (size_t i = 0; i < this->channels.size(); i++)
 	{
-		if (this->channels[i].getName() == name)
-			return &channels[i];
+		if (this->channels[i]->getName() == name)
+			return this->channels[i];
 	}
 	return NULL;
 }
@@ -76,7 +78,7 @@ void Server::addClient(Client new_client){
 	this->clients.push_back(new_client);
 }
 
-void Server::addChannel(Channel new_channel){
+void Server::addChannel(Channel* new_channel){
 	this->channels.push_back(new_channel);
 }
 

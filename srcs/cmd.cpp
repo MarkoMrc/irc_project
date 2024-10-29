@@ -1,3 +1,4 @@
+#include <typeinfo>
 #include "../inc/Server.hpp"
 
 // CAP LS
@@ -94,13 +95,14 @@ void Server::handleQuit(int socket) {
 	// std::cout << "socket " << getClient(socket) << std::endl;
 	if (!client){
 		std::cout << "erreur !client" << std::endl;
+		return;
 	}
 	// else
 		// std::cout << "tout good" << std::endl;
 
 	// remove le client de tous les channels auxquels il est connecte
-	for (std::vector<Channel>::iterator it = channels.begin(); it != channels.end(); ++it){
-		it->removeClient(client->getFd());
+	for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it){
+		(*it)->removeClient(client->getFd());
 	}
 
 	std::cout << "Client " << client->getNickname() << " has quit." << std::endl;
@@ -154,6 +156,7 @@ void Server::handleJoin(int socket, const std::string& params) {
 	std::string channel_name;
 
 	iss >> channel_name;
+	std::cout << "Nom du channel" << channel_name << std::endl;
 	if (channel_name.empty() || channel_name[0] != '#')
 	{
 		std::cerr << "Invalid channel name: " << channel_name << std::endl;
@@ -164,16 +167,20 @@ void Server::handleJoin(int socket, const std::string& params) {
 	Channel *channel = getChannel(channel_name);
 	if (!channel) {
 	// il faut le creer
-	Channel new_channel;
-	new_channel.setName(channel_name);
-	new_channel.addAdmin(*client);
+	Channel* new_channel = new Channel();
+	new_channel->setName(channel_name);
+	new_channel->addAdmin(*client);
+	addChannel(new_channel);
 	std::cout << "arg size == " << arg.size() << std::endl;
+	std::cout << "arg 0 == " << arg[0] << std::endl;
+	std::cout << "arg 1 == " << arg[1] << std::endl;
 	if (arg.size() == 2)
 	{
-		new_channel.setModePasswordProtected(true);
-		new_channel.setPassword(arg[1]);
+		new_channel->setModePasswordProtected(true);
+		new_channel->setPassword(arg[1]);
+		std::cout << "Mot de passe du channel : " << new_channel->getPassword() << std::endl;
+		std::cout << "Type du mot de passe : " << typeid(new_channel->getPassword()).name() << std::endl;
 	}
-	addChannel(new_channel);
 	channel = getChannel(channel_name);
 	std::cout << "Created new channel: " << channel_name << std::endl;
 	}
@@ -185,13 +192,21 @@ void Server::handleJoin(int socket, const std::string& params) {
             return;
         }
     }
-	std::cout << "chanel : " << channel->isModePasswordProtected() << " size : " << arg.size() << " password : " << channel->getPassword() << " arg : " << arg[1] << std::cout;
+	std::cout << "channel : " << channel->isModePasswordProtected() << " size : " << arg.size() << " password : " << channel->getPassword() << " arg : " << arg[1] << std::endl;
 	// verification du mot de pass
 	if (channel->isModePasswordProtected() && (arg.size() < 2 || arg[1] != channel->getPassword()))
 	{
 		std::cout << "error password" << std::endl;
 		return;
 	}
+	if (channel->isModePasswordProtected()) {
+    std::cout << "Mode protégé activé pour le canal" << std::endl;
+    // if (arg.size() < 2) {
+    //     std::cout << "Mot de passe manquant pour rejoindre le canal." << std::endl;
+    // } else {
+    //     std::cout << "Mot de passe fourni : " << arg[1] << ", mot de passe attendu : " << channel->getPassword() << std::endl;
+    // }
+}
 	channel->addClient(*client);
 	std::cout << client->getNickname() << " joined channel " << channel_name << std::endl;
 

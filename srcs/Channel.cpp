@@ -42,7 +42,7 @@ std::string Channel::getTopic_N(){
 	return this->topic_n;
 }
 
-std::string Channel::getPassword(){
+std::string Channel::getPassword() const {
 	return this->password;
 }
 

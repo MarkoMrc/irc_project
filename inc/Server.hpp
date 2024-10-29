@@ -45,7 +45,7 @@ private:
 	int port;
 	std::string password;
 	std::vector<Client> clients;
-	std::vector<Channel> channels;
+	std::vector<Channel*> channels;
 	int server_socket_fd;
 	int epoll_fd;
 	void handleCapLs(int socket);
@@ -80,7 +80,7 @@ public:
 	void setPort(int port);
 	void setPassword(std::string password);
 	void addClient(Client new_client);
-	void addChannel(Channel new_channel);
+	void addChannel(Channel* new_channel);
 
 	void serv_init(int port, std::string password);
 
