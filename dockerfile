@@ -6,4 +6,5 @@ RUN apt-get update && apt-get install -y valgrind lldb make g++ && apt-get clean
 
 COPY . /app
 
+RUN make
 # ENTRYPOINT ["make", "re"]

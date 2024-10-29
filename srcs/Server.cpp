@@ -397,7 +397,7 @@ void Server::handleConnection(int socket) {
 			} else if (command == "MODE") {
 				handleMode(socket, params);
 			} else if (command == "QUIT") {
-				handleQuit(socket);
+				handleQuit(socket, params);
 			} else if (command == "JOIN") {
 				handleJoin(socket, params);
 			} else if (command == "TOPIC") {
@@ -443,4 +443,9 @@ void Server::closing_sockets()
 	for (it = clients.begin(); it != clients.end(); it++) {
 		close((*it).getFd());
 	}
+}
+
+std::vector<Client> Server::getClients()
+{
+	return clients;
 }

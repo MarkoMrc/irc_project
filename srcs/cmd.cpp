@@ -46,13 +46,35 @@ void Server::handlePass(int socket, const std::string& params, bool firstConnexi
 	}
 }
 
+bool Server::checkNick(const std::string& params)
+{
+	for (long unsigned int i = 0; i < params.size(); i++)
+		if (!std::isalnum(params[i]) && params[i] != '_' && params[i] != '-')
+			return false;
+	return true;
+}
+
+
 void Server::handleNick(int socket, const std::string& params) {
 	std::cout << "Commande NICK reçue avec params: " << params << std::endl;
-
 	Client *client = getClient(socket);
 	if (!client){
 		std::cout << "erreur !client : "<< getClient(socket) << std::endl;
 	}
+	if (params.empty())
+		std::cout << "message d'erreur" << std::endl;
+	if (!checkNick(params))
+	{
+		std::cout << "le nickname doit etre compose uniquement de lettre chiffre ou tiret" << std::endl; // mettre les bon messages d'erreur
+		return;
+	}
+	std::vector<Client> clins = getClients();
+	for (long unsigned int i = 0; i < clins.size(); i++)
+		if (clins[i].getNickname() == params)
+		{
+			std::cout << "nickname deja existant" << std::endl; // mettre les bon messages d'erreur
+			return;
+		}
 	client->setNickname(params);  // Met a jour le surnom du client
 	std::cout << "Client socket " << socket << " set nickname to: " << client->getNickname() << std::endl;
 
@@ -89,8 +111,8 @@ void Server::handleMode(int socket, const std::string& params) {
 	(void) socket;
 }
 
-void Server::handleQuit(int socket) {
-	std::cout << "Commande QUIT reçue" << std::endl;
+void Server::handleQuit(int socket, const std::string& params) {
+	std::cout << "Commande QUIT reçue : " << params << std::endl;
 	Client *client = getClient(socket);
 	// std::cout << "socket " << getClient(socket) << std::endl;
 	if (!client){
@@ -105,7 +127,10 @@ void Server::handleQuit(int socket) {
 		(*it)->removeClient(client->getFd());
 	}
 
-	std::cout << "Client " << client->getNickname() << " has quit." << std::endl;
+	if (params.empty())
+		std::cout << "Client " << client->getNickname() << " QUIT :" << " has quit." << std::endl;
+	else
+		std::cout << "Client " << client->getNickname() << " QUIT :" << params << std::endl;
 	const char *msg = "You quit.\r\n";
 	send(socket, msg, strlen(msg), 0);
 	close(socket);
