@@ -108,11 +108,6 @@ void Server::handleUser(int socket, const std::string& params) {
 
 void Server::handleMode(int socket, const std::string& params) {
 	std::cout << "Commande MODE reçue avec params: " << params << std::endl;
-	(void) socket;
-}
-
-void Server::handleQuit(int socket, const std::string& params) {
-	std::cout << "Commande QUIT reçue : " << params << std::endl;
 	std::vector<std::string> words;
 	std::istringstream iss(params);
 	std::string word;
@@ -263,9 +258,10 @@ void Server::handleQuit(int socket, const std::string& params) {
 	else {
 		std::cerr << "Erreur: mode inconnu" << std::endl;
 	}
+	
 }
 
-void Server::handleQuit(int socket) {
+void Server::handleQuit(int socket, const std::string& params) {
 	std::cout << "Commande QUIT reçue" << std::endl;
 	Client *client = getClient(socket);
 	// std::cout << "socket " << getClient(socket) << std::endl;
@@ -500,6 +496,6 @@ void Server::handlePrivmsg(int socket, const std::string& params) {
 }
 
 void Server::handleOper(int socket, const std::string& params) {
-    std::cout << "Commande TOPIC reçue avec params: " << params << std::endl;
+    std::cout << "Commande OPER reçue avec params: " << params << std::endl;
 	(void) socket;
 }
