@@ -492,6 +492,7 @@ void Server::handleJoin(int socket, const std::string& params) {
 		// channel->addClient(client);
 	// }
 	if (channel->isModeLimit()){
+		std::cout << "test de limite" << std::endl;
 		if (channel->isFull()) {
 			std::cerr << "Le canal " << channel_name << " est plein, impossible de rejoindre." << std::endl;
 			std::string error_message = "Le canal est plein, vous ne pouvez pas rejoindre.\r\n";
