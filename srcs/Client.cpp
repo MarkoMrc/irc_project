@@ -15,7 +15,9 @@ Client::Client()
 
 // Client::Client(std::string username, std::string nickname, int fd) : username(username), nickname(nickname), fd(fd) {}
 
-Client::~Client(){}
+Client::~Client(){
+	std::cout << "destructor of client called" << std::endl;
+}
 
 Client::Client(Client const &src){
 	*this = src;
