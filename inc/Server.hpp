@@ -60,6 +60,7 @@ private:
 	void handleTopic(int socket, const std::string& params);
 	void handleKick(int socket, const std::string& params);
 	void handlePrivmsg(int socket, const std::string& params);
+	void handleInvite(int socket, const std::string& params);
 	// std::vector<std::string> split(const std::string& str, char delimiter);
 	std::vector<std::string> parsJoin(const std::string& params);
 	bool checkNick(const std::string& params);
@@ -82,7 +83,7 @@ public:
 	void setFd(int fd_socket);
 	void setPort(int port);
 	void setPassword(std::string password);
-	void addClient(Client new_client);
+	void addClient(Client* new_client);
 	void addChannel(Channel* new_channel);
 
 	void serv_init(int port, std::string password);

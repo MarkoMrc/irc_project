@@ -2,7 +2,7 @@
 
 Client::Client()
 {
-	this->fd = -1;
+	this->fd = 0;
 	this->username = "";
 	this->nickname = "";
 	this->ip_add = "";

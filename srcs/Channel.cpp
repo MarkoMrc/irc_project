@@ -4,9 +4,10 @@ Channel::Channel()
 {
 	this->key = 0;
 	this->topic = 0;
-	this->limit = 0;
+	this->limit = 10;
 	this->name = "";
 	this->topic_n = "";
+	this->modeLimit = false;
 	this->modePasswordProtected = false;
 }
 
@@ -75,18 +76,19 @@ void Channel::setPassword(const std::string& pass){
 	password = pass;
 }
 
-void Channel::setLimit(int limit){
+void Channel::setLimit(size_t limit){
 	limit = limit;
 }
 
 int Channel::getClient_N(){
 	return this->clients.size() + this->admins.size();
 }
+
 Client *Channel::getClient(int fd){
-	for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it)
+	for (std::vector<Client*>::iterator it = clients.begin(); it != clients.end(); ++it)
 	{
-		if (it->getFd() == fd)
-			return &(*it);
+		if ((*it)->getFd() == fd)
+			return (*it);
 	}
 	return NULL;
 }
@@ -100,8 +102,9 @@ Client *Channel::getAdmin(int fd){
 	return NULL;
 }
 
-void Channel::addClient(Client new_client){
+void Channel::addClient(Client* new_client){
 	clients.push_back(new_client);
+	std::cout << "Client FD: " << new_client->getFd() << " ajouté au canal." << std::endl;
 }
 
 void Channel::addAdmin(Client new_client){
@@ -119,24 +122,27 @@ bool Channel::isAdmin(const Client& client) const {
 }
 
 bool Channel::isClient(const Client& client) const {
-	for (std::vector<Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-		if (it->getFd() == client.getFd()) {
+	for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+		std::cout << "Testing socket: " << (*it)->getFd() << " against client socket: " << client.getFd() << std::endl;
+		if ((*it)->getFd() == client.getFd()) {
 			return true;
 		}
 	}
 	return false;
 }
 
-void Channel::removeClient(int fd){
-	for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it)
-	{
-		if (it->getFd() == fd)
-		{
-			clients.erase(it);
-			break;
+void Channel::removeClient(int fd) {
+	for (std::vector<Client*>::iterator it = clients.begin(); it != clients.end(); ) {
+		if ((*it)->getFd() == fd) {
+			std::cout << "element supprimer" << std::endl;
+			// delete *it; // Si vous devez libérer la mémoire (si les pointeurs sont alloués dynamiquement)
+			it = clients.erase(it); // Supprime le client et obtient l'itérateur vers le nouvel élément
+		} else {
+			++it; // On avance l'itérateur seulement si aucun élément n'a été supprimé
 		}
 	}
 }
+
 
 
 void Channel::removeAdmin(int fd){
@@ -151,6 +157,26 @@ void Channel::removeAdmin(int fd){
 }
 
 
-std::vector<Client>& Channel::getClients() {
-	return clients;
+std::vector<Client*>& Channel::getClients(){
+	return this->clients;
 }
+
+void Channel::broadcastMessage(const std::string& message, Client* excludeClient) {
+    // Parcours du vecteur de clients en utilisant un itérateur
+    for (std::vector<Client*>::iterator it = clients.begin(); it != clients.end(); ++it) {
+        Client* client = *it;
+        
+        // Si excludeClient est défini, on exclut ce client de la diffusion
+        if (excludeClient != NULL && client == excludeClient) {
+            continue;
+        }
+        
+        // Envoi du message au client
+        send(client->getFd(), message.c_str(), message.length(), 0);
+    }
+}
+
+
+bool Channel::isFull() const {
+        return clients.size() >= limit; // Vérifie si le canal est plein
+    }

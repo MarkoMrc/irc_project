@@ -68,6 +68,7 @@ public:
 	void setLogged(bool status);
 	void setPswdEnterd(bool status);
 
+
 	// Methode pour verifier si le client est authentifie
 	bool isLogged() const;
 	bool isPswdEnterd() const;

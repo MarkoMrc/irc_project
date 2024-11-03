@@ -233,7 +233,7 @@ void Server::handleMode(int socket, const std::string& params) {
 				channel->setModeLimit(true);
 			}
 			std::istringstream iss(words[2]);
-			int limit;
+			size_t limit;
 			if (!(iss >> limit)){
 				std::cerr << "Erreur : valeur non valide pour la limite du nombre de clients." << std::endl;
 			}
@@ -261,41 +261,80 @@ void Server::handleMode(int socket, const std::string& params) {
 	
 }
 
+// void Server::handleQuit(int socket, const std::string& params) {
+// 	std::cout << "Commande QUIT reçue" << std::endl;
+// 	Client *client = getClient(socket);
+// 	// std::cout << "socket " << getClient(socket) << std::endl;
+// 	if (!client){
+// 		std::cout << "erreur !client" << std::endl;
+// 		return;
+// 	}
+// 	// else
+// 		// std::cout << "tout good" << std::endl;
+
+// 	// remove le client de tous les channels auxquels il est connecte
+// 	for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it){
+// 		(*it)->removeClient(client->getFd());
+// 	}
+
+// 	if (params.empty())
+// 		std::cout << "Client " << client->getNickname() << " QUIT :" << " has quit." << std::endl;
+// 	else
+// 		std::cout << "Client " << client->getNickname() << " QUIT :" << params << std::endl;
+// 	const char *msg = "You quit.\r\n";
+// 	send(socket, msg, strlen(msg), 0);
+// 	close(socket);
+// }
+
 void Server::handleQuit(int socket, const std::string& params) {
-	std::cout << "Commande QUIT reçue" << std::endl;
-	Client *client = getClient(socket);
-	// std::cout << "socket " << getClient(socket) << std::endl;
-	if (!client){
-		std::cout << "erreur !client" << std::endl;
-		return;
-	}
-	// else
-		// std::cout << "tout good" << std::endl;
+    std::cout << "Commande QUIT reçue" << std::endl;
+    Client *client = getClient(socket);
+    if (!client) {
+        std::cout << "Erreur : client introuvable." << std::endl;
+        return;
+    }
 
-	// remove le client de tous les channels auxquels il est connecte
-	for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it){
-		(*it)->removeClient(client->getFd());
-	}
+    // Supprimer le client de tous les canaux auxquels il est connecté
+    for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it) {
+        Channel* channel = *it;
+        if (channel->isClient(*client)) {
+            // Notifier les autres clients que ce client a quitté
+            std::string quit_message = ":" + client->getNickname() + " QUIT :" + (params.empty() ? "has quit." : params) + "\r\n";
+            channel->broadcastMessage(quit_message, client);
 
-	if (params.empty())
-		std::cout << "Client " << client->getNickname() << " QUIT :" << " has quit." << std::endl;
-	else
-		std::cout << "Client " << client->getNickname() << " QUIT :" << params << std::endl;
-	const char *msg = "You quit.\r\n";
-	send(socket, msg, strlen(msg), 0);
-	close(socket);
+            // Mettre à jour la liste des noms pour tous les clients restants
+            std::string names_list = "= " + channel->getName() + " :";
+            const std::vector<Client*>& clients = channel->getClients();
+            for (std::vector<Client*>::const_iterator remainingIt = clients.begin(); remainingIt != clients.end(); ++remainingIt) {
+                names_list += (*remainingIt)->getNickname() + " ";
+            }
+            names_list += "\r\n";
+
+            // Envoyer la mise à jour de la liste des noms à tous les clients restants
+            for (std::vector<Client*>::const_iterator remainingIt = clients.begin(); remainingIt != clients.end(); ++remainingIt) {
+                send((*remainingIt)->getFd(), names_list.c_str(), names_list.length(), 0);
+            }
+        }
+        (*it)->removeClient(client->getFd());
+    }
+
+    std::cout << "Client " << client->getNickname() << " QUIT : " << (params.empty() ? "has quit." : params) << std::endl;
+    const char *msg = "You quit.\r\n";
+    send(socket, msg, strlen(msg), 0);
+    close(socket);
 }
+
 
 
 std::vector<std::string> split(const std::string& str, char delimiter)
 {
-    std::vector<std::string> tokens;
-    std::string token;
-    std::istringstream tokenStream(str);
-    while (std::getline(tokenStream, token, delimiter)) {
-        tokens.push_back(token);
-    }
-    return tokens;
+	std::vector<std::string> tokens;
+	std::string token;
+	std::istringstream tokenStream(str);
+	while (std::getline(tokenStream, token, delimiter)) {
+		tokens.push_back(token);
+	}
+	return tokens;
 }
 
 std::vector<std::string> Server::parsJoin(const std::string& params)
@@ -341,32 +380,61 @@ void Server::handleJoin(int socket, const std::string& params) {
 	// Verifier si le channel exsite deja, sinon creer nouveau channel
 	Channel *channel = getChannel(channel_name);
 	if (!channel) {
-	// il faut le creer
-	Channel* new_channel = new Channel();
-	new_channel->setName(channel_name);
-	new_channel->addAdmin(*client);
-	addChannel(new_channel);
-	std::cout << "arg size == " << arg.size() << std::endl;
-	std::cout << "arg 0 == " << arg[0] << std::endl;
-	// std::cout << "arg 1 == " << arg[1] << std::endl;
-	if (arg.size() == 2)
-	{
-		new_channel->setModePasswordProtected(true);
-		new_channel->setPassword(arg[1]);
-		std::cout << "Mot de passe du channel : " << new_channel->getPassword() << std::endl;
-		std::cout << "Type du mot de passe : " << typeid(new_channel->getPassword()).name() << std::endl;
-	}
-	channel = getChannel(channel_name);
-	std::cout << "Created new channel: " << channel_name << std::endl;
+		
+		// il faut le creer
+		Channel* new_channel = new Channel();
+		new_channel->setName(channel_name);
+		new_channel->addAdmin(*client);
+		addChannel(new_channel);
+		std::cout << "arg size == " << arg.size() << std::endl;
+		std::cout << "arg 0 == " << arg[0] << std::endl;
+		// std::cout << "arg 1 == " << arg[1] << std::endl;
+		if (arg.size() == 2)
+		{
+			new_channel->setModePasswordProtected(true);
+			new_channel->setPassword(arg[1]);
+			std::cout << "Mot de passe du channel : " << new_channel->getPassword() << std::endl;
+			std::cout << "Type du mot de passe : " << typeid(new_channel->getPassword()).name() << std::endl;
+		}
+		channel = getChannel(channel_name);
+		std::cout << "Created new channel: " << channel_name << std::endl;
 	}
 
-	const std::vector<Client>& clients = channel->getClients();
-    for (std::vector<Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-        if (it->getFd() == client->getFd()) {
-            std::cerr << client->getNickname() << " is already in channel " << channel_name << std::endl;
-            return;
-        }
-    }
+	const std::vector<Client*>& clients = channel->getClients();
+    std::cout << "Clients dans le canal " << channel_name << ":" << std::endl;
+
+	// Vérifiez la taille du vecteur
+	std::cout << "Nombre de clients dans le canal: " << clients.size() << std::endl;
+
+	for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+	    std::cout << "Client FD: " << (*it)->getFd() << ", Nickname: " << (*it)->getNickname() << std::endl;
+	}
+
+	// Vérification si le client est déjà dans le canal
+	for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+	    std::cout << "Je rentre dans le check" << std::endl;
+	    std::cout << "client= " << client->getFd() << std::endl;
+	    std::cout << "it = " << (*it)->getFd() << std::endl;
+
+	    if ((*it)->getFd() == client->getFd()) {
+	        std::cerr << client->getNickname() << " est déjà dans le canal " << channel_name << std::endl;
+	        return;
+	    }
+	}
+	// const std::vector<Client*>& clients = channel->getClients();
+	// for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+    //     std::cout << "Client FD: " << (*it)->getFd() << ", Nickname: " << (*it)->getNickname() << std::endl;
+    // }
+	// for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+	// 	std::cout << "je rentre dans le check" << std::endl;
+	// 	std::cout << "client= " << client->getFd() << std::endl;
+	// 	std::cout << "it = " << (*it)->getFd() << std::endl;
+	// 	if ((*it)->getFd() == client->getFd()) {
+	// 		std::cout << "it = " << (*it)->getFd() << std::endl;
+	// 		std::cerr << client->getNickname() << " is already in channel " << channel_name << std::endl;
+	// 		return;
+	// 	}
+	// }
 	// std::cout << "channel : " << channel->isModePasswordProtected() << " size : " << arg.size() << " password : " << channel->getPassword() << " arg : " << arg[1] << std::endl;
 	// verification du mot de pass
 	if (channel->isModePasswordProtected() && (arg.size() < 2 || arg[1] != channel->getPassword()))
@@ -374,15 +442,31 @@ void Server::handleJoin(int socket, const std::string& params) {
 		std::cout << "error password" << std::endl;
 		return;
 	}
-	if (channel->isModePasswordProtected()) {
-    std::cout << "Mode protégé activé pour le canal" << std::endl;
-    // if (arg.size() < 2) {
-    //     std::cout << "Mot de passe manquant pour rejoindre le canal." << std::endl;
-    // } else {
-    //     std::cout << "Mot de passe fourni : " << arg[1] << ", mot de passe attendu : " << channel->getPassword() << std::endl;
-    // }
-}
-	channel->addClient(*client);
+	// if (channel->isModePasswordProtected()) {
+		// std::cout << "Mode protégé activé pour le canal" << std::endl;
+		// if (arg.size() < 2) {
+		//	 std::cout << "Mot de passe manquant pour rejoindre le canal." << std::endl;
+		// } else {
+		//	 std::cout << "Mot de passe fourni : " << arg[1] << ", mot de passe attendu : " << channel->getPassword() << std::endl;
+		// }
+		// channel->addClient(client);
+	// }
+	if (channel->isModeLimit()){
+		if (channel->isFull()) {
+			std::cerr << "Le canal " << channel_name << " est plein, impossible de rejoindre." << std::endl;
+			std::string error_message = "Le canal est plein, vous ne pouvez pas rejoindre.\r\n";
+			send(socket, error_message.c_str(), error_message.length(), 0);
+			return;
+		}
+	}
+
+	channel->addClient(client);
+	std::cout << "Clients après ajout:" << std::endl;
+	for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+	    std::cout << "Client FD: " << (*it)->getFd() << ", Nickname: " << (*it)->getNickname() << std::endl;
+	}
+
+
 	std::cout << client->getNickname() << " joined channel " << channel_name << std::endl;
 
 	// message de confirmation
@@ -391,8 +475,8 @@ void Server::handleJoin(int socket, const std::string& params) {
 
 	// // Envoyer la liste des utilisateurs actuels du channel au client qui vient de rejoindre
 	std::string names_list = "= " + channel_name + " :";
-	for (std::vector<Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-		names_list += it->getNickname() + " ";
+	for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+		names_list += (*it)->getNickname() + " ";
 	}
 
 	names_list += "\r\n";
@@ -404,48 +488,126 @@ void Server::handleJoin(int socket, const std::string& params) {
 }
 
 void Server::handleTopic(int socket, const std::string& params) {
-    std::cout << "Commande TOPIC reçue avec params: " << params << std::endl;
+	std::cout << "Commande TOPIC reçue avec params: " << params << std::endl;
 
-    Client *client = getClient(socket);
-    if (!client) return;
+	Client *client = getClient(socket);
+	if (!client) return;
 
-    std::istringstream iss(params);
-    std::string channel_name, topic;
-    iss >> channel_name;
-    getline(iss, topic);  // Le reste de la ligne après le nom du canal est le sujet
+	std::istringstream iss(params);
+	std::string channel_name, topic;
+	iss >> channel_name;
+	getline(iss, topic);  // Le reste de la ligne après le nom du canal est le sujet
 
-    Channel *channel = getChannel(channel_name);
-    if (channel) {
-        if (!topic.empty()) { // Vérifie si un nouveau sujet a été fourni
-            channel->setTopic_n(topic);
-            std::cout << "Topic for channel " << channel_name << " set to: " << topic << std::endl;
+	Channel *channel = getChannel(channel_name);
+	if (channel) {
+	if (!topic.empty()) { // Vérifie si un nouveau sujet a été fourni
+	channel->setTopic_n(topic);
+	std::cout << "Topic for channel " << channel_name << " set to: " << topic << std::endl;
 
-            std::string topic_message = ":" + client->getNickname() + " TOPIC " + channel_name + " :" + topic + "\r\n";
+	std::string topic_message = ":" + client->getNickname() + " TOPIC " + channel_name + " :" + topic + "\r\n";
 
-            // Envoyer le message à tous les clients dans le canal
-            const std::vector<Client>& clients = channel->getClients();
-            for (std::vector<Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-                send(it->getFd(), topic_message.c_str(), topic_message.length(), 0);
-            }
-        } else { // Si aucun nouveau sujet n'est fourni, envoyer le sujet actuel
-            std::string topic_name = channel->getTopic_N();
-            std::string topic_message = ":" + client->getNickname() + " TOPIC " + channel_name + " :" + topic_name + "\r\n";
+	// Envoyer le message à tous les clients dans le canal
+	const std::vector<Client*>& clients = channel->getClients();
+	for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+	send((*it)->getFd(), topic_message.c_str(), topic_message.length(), 0);
+	}
+	} else { // Si aucun nouveau sujet n'est fourni, envoyer le sujet actuel
+	std::string topic_name = channel->getTopic_N();
+	std::string topic_message = ":" + client->getNickname() + " TOPIC " + channel_name + " :" + topic_name + "\r\n";
 
-            // Envoyer le message à tous les clients dans le canal
-            const std::vector<Client>& clients = channel->getClients();
-            for (std::vector<Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-                send(it->getFd(), topic_message.c_str(), topic_message.length(), 0);
-            }
-        }
-    } else {
-        std::cerr << "Channel " << channel_name << " not found." << std::endl;
-    }
+	// Envoyer le message à tous les clients dans le canal
+	const std::vector<Client*>& clients = channel->getClients();
+	for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+	send((*it)->getFd(), topic_message.c_str(), topic_message.length(), 0);
+	}
+	}
+	} else {
+	std::cerr << "Channel " << channel_name << " not found." << std::endl;
+	}
 }
 
 
 void Server::handleKick(int socket, const std::string& params) {
 	std::cout << "Commande KICK reçue avec params: " << params << std::endl;
-	(void) socket;
+	std::vector<std::string> parsedParams;
+    std::istringstream iss(params);
+    std::string word;
+
+    // Séparer les paramètres par espace
+    while (iss >> word) {
+        parsedParams.push_back(word);
+    }
+
+    // Vérification du nombre minimum de paramètres attendus (deux : canal et pseudo de l'utilisateur)
+    if (parsedParams.size() < 2) {
+        std::cerr << "Erreur : Paramètres insuffisants pour la commande KICK" << std::endl;
+        return;
+    }
+
+    // Extraction des paramètres
+    std::string channelName = parsedParams[0];
+    std::string targetNickname = parsedParams[1];
+    std::string reason;
+
+    // Si une raison est fournie, on la reconstruit à partir des éléments restants
+    if (parsedParams.size() > 2) {
+        reason = params.substr(params.find(parsedParams[2]));  // Recréer la raison à partir du troisième mot
+    }
+
+    // Récupérer le client émetteur de la commande KICK
+    Client *kicker = getClient(socket);
+    if (!kicker) {
+        std::cerr << "Erreur : client émetteur introuvable pour le socket " << socket << std::endl;
+        return;
+    }
+
+    // Récupérer le canal
+    Channel *channel = getChannel(channelName);
+    if (!channel) {
+        std::cerr << "Erreur : le canal " << channelName << " n'existe pas" << std::endl;
+        return;
+    }
+
+    // Vérifier si l'émetteur est membre du canal et a les droits nécessaires pour expulser
+    if (!channel->isClient(*kicker)) {
+        std::cerr << "Erreur : vous n'êtes pas membre du canal " << channelName << std::endl;
+        return;
+    }
+    if (!channel->isAdmin(*kicker)) {
+        std::cerr << "Erreur : vous n'avez pas la permission d'expulser dans ce canal" << std::endl;
+        return;
+    }
+
+    // Récupérer le client cible de l'expulsion
+    Client *kickee = getClient(targetNickname);
+    if (!kickee) {
+        std::cerr << "Erreur : le client " << targetNickname << " n'existe pas" << std::endl;
+        return;
+    }
+
+    // Vérifier si le client est bien dans le canal
+    if (!channel->isClient(*kickee)) {
+        std::cerr << "Erreur : " << targetNickname << " n'est pas dans le canal " << channelName << std::endl;
+        return;
+    }
+
+    // Créer le message de kick à envoyer à tous les membres du canal
+    std::string kickMessage = ":" + kicker->getNickname() + " KICK " + channelName + " " + targetNickname;
+    if (!reason.empty()) {
+        kickMessage += " :" + reason;
+    }
+    kickMessage += "\r\n";
+
+    // Envoyer le message à tous les membres du canal
+    channel->broadcastMessage(kickMessage, kickee);
+
+    // Retirer le client du canal
+    channel->removeClient(kickee->getFd());
+    std::cout << "Client " << targetNickname << " expulsé du canal " << channelName << " par " << kicker->getNickname();
+    if (!reason.empty()) {
+        std::cout << " pour la raison : " << reason;
+    }
+    std::cout << std::endl;
 }
 
 void Server::handlePrivmsg(int socket, const std::string& params) {
@@ -472,10 +634,10 @@ void Server::handlePrivmsg(int socket, const std::string& params) {
 
 		// Envoyer le message a tous les clients dans le channel, sauf l'expediteur
 		std::string formatted_message = ":" + client->getNickname() + " PRIVMSG " + target + " :" + message + "\r\n";
-		std::vector<Client>::iterator it;
+		std::vector<Client*>::iterator it;
 		for (it = channel->getClients().begin(); it != channel->getClients().end(); ++it) {
-			if (it->getFd() != client->getFd()) {
-				send(it->getFd(), formatted_message.c_str(), formatted_message.length(), 0);
+			if ((*it)->getFd() != client->getFd()) {
+				send((*it)->getFd(), formatted_message.c_str(), formatted_message.length(), 0);
 			}
 		}
 
@@ -496,6 +658,77 @@ void Server::handlePrivmsg(int socket, const std::string& params) {
 }
 
 void Server::handleOper(int socket, const std::string& params) {
-    std::cout << "Commande OPER reçue avec params: " << params << std::endl;
+	std::cout << "Commande OPER reçue avec params: " << params << std::endl;
 	(void) socket;
 }
+
+void Server::handleInvite(int socket, const std::string& params) {
+	std::cout << "Commande INVITE reçue avec params: " << params << std::endl;
+
+	// Parsing de params avec un vecteur
+	std::vector<std::string> parsedParams;
+	std::istringstream iss(params);
+	std::string word;
+
+	// Séparer les paramètres par espace
+	while (iss >> word) {
+		parsedParams.push_back(word);
+	}
+
+	// Vérification du nombre de paramètres attendus (deux : le pseudo cible et le canal)
+	if (parsedParams.size() < 2) {
+		std::cerr << "Erreur : Paramètres insuffisants pour la commande INVITE" << std::endl;
+		return;
+	}
+
+	// Extraction des paramètres
+	std::string targetNickname = parsedParams[0];
+	std::string channelName = parsedParams[1];
+
+	// Récupérer le client émetteur de la commande INVITE
+	Client *inviter = getClient(socket);
+	if (!inviter) {
+		std::cerr << "Erreur : client émetteur introuvable pour le socket " << socket << std::endl;
+		return;
+	}
+
+	// Récupérer le canal
+	Channel *channel = getChannel(channelName);
+	if (!channel) {
+		std::cerr << "Erreur : le canal " << channelName << " n'existe pas" << std::endl;
+		return;
+	}
+
+	// Vérifier si l'inviteur est dans le canal et a les droits nécessaires
+	if (!channel->isClient(*inviter)) {
+		std::cerr << "Erreur : vous n'êtes pas membre du canal " << channelName << std::endl;
+		return;
+	}
+	if (!channel->isAdmin(*inviter)) {
+		std::cerr << "Erreur : vous n'avez pas la permission d'inviter dans ce canal" << std::endl;
+		return;
+	}
+
+	// Récupérer le client cible de l'invitation
+	Client *invitee = getClient(targetNickname);
+	if (!invitee) {
+		std::cerr << "Erreur : le client " << targetNickname << " n'existe pas" << std::endl;
+		return;
+	}
+
+	// Vérifier si l'invité est déjà dans le canal
+	if (channel->isClient(*invitee)) {
+		std::cerr << "Erreur : " << targetNickname << " est déjà dans le canal " << channelName << std::endl;
+	return;
+	}
+
+	// Envoyer l'invitation au client cible
+	std::string inviteMessage = ":" + inviter->getNickname() + " INVITE " + targetNickname + " :" + channelName + "\r\n";
+	send(invitee->getFd(), inviteMessage.c_str(), inviteMessage.length(), 0);
+	std::cout << "Invitation envoyée de " << inviter->getNickname() << " à " << targetNickname << " pour rejoindre le canal " << channelName << std::endl;
+
+	// Confirmer l'invitation à l'invitant
+	std::string confirmationMessage = ":" + inviter->getNickname() + " INVITE " + targetNickname + " " + channelName + "\r\n";
+	send(socket, confirmationMessage.c_str(), confirmationMessage.length(), 0);
+}
+

@@ -11,7 +11,7 @@ class Channel
 private:
 	int topic;
 	int key;
-	int limit;
+	size_t limit;
 	bool modeInviteOnly; // Mode +i
 	bool modeTopicOp; // Mode +t
 	bool modePasswordProtected; // Mode +k
@@ -19,7 +19,7 @@ private:
 	std::string name;
 	std::string password;
 	std::string topic_n;
-	std::vector<Client> clients;
+	std::vector<Client*> clients;
 	std::vector<Client> admins;
 
 public:
@@ -37,7 +37,7 @@ public:
 	void setModePasswordProtected(bool value);
 	void setModeLimit(bool value);
 	void setPassword(const std::string& pass);
-	void setLimit(int limit);
+	void setLimit(size_t limit);
 
 
 	bool isModeInviteOnly() const { return modeInviteOnly; }
@@ -54,14 +54,17 @@ public:
 	Client *getClient(int fd);
 	Client *getAdmin(int fd);
 
-	void addClient(Client new_client);
+	void addClient(Client* new_client);
 	void addAdmin(Client new_client);
 	void removeClient(int fd);
 	void removeAdmin(int fd);
 	bool isAdmin(const Client& client) const;
 	bool isClient(const Client& client) const;
+	void broadcastMessage(const std::string& message, Client* excludeClient);
+	bool isFull() const;
+	
 
-	std::vector<Client>& getClients();
+	std::vector<Client*>& getClients();
 };
 
 

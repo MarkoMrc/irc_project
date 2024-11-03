@@ -74,8 +74,8 @@ void Server::setPassword(std::string password){
 }
 
 
-void Server::addClient(Client new_client){
-	this->clients.push_back(new_client);
+void Server::addClient(Client* new_client){
+	this->clients.push_back(*new_client);
 }
 
 void Server::addChannel(Channel* new_channel){
@@ -190,11 +190,13 @@ void Server::acceptClient() {
 	}
 
 	// Creer un nouvel objet Client avec le socket
-	Client new_client;
-	new_client.setFd(client_socket);  // Setter pour definir le socket du client
-	new_client.setPswdEnterd(false);
+	Client* new_client;
+	new_client = new Client();
+	new_client->setFd(client_socket);  // Setter pour definir le socket du client
+	new_client->setPswdEnterd(false);
 	// Ajouter le client a la liste des clients du serveur
 	addClient(new_client);
+	// clients.push_back(new_client);
 }
 
 // Definir une methode pour rendre un socket non bloquant
@@ -410,7 +412,9 @@ void Server::handleConnection(int socket) {
 				handleKick(socket, params);
 			} else if (command == "PRIVMSG") {
 				handlePrivmsg(socket, params);
-			} else {
+			} else if (command == "PRIVMSG") {
+				handleInvite(socket, params);
+			}else {
 				std::cerr << "Commande inconnue: " << command << std::endl;
 			}
 
