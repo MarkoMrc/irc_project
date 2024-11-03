@@ -15,6 +15,14 @@
 // 	std::cout << "test " << test << " " << mdp << std::endl;
 // }
 
+void signalHandler(int signum) {
+	if (signum == SIGINT)
+	{
+		std::cout << "controle C" << std::endl;
+		exit(1);
+	}
+}
+
 int main(int argc, char **argv)
 {
 	Server server;
@@ -24,6 +32,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 	std::cout << "-------SERVER-------" << std::endl;
+	std::signal(SIGINT, signalHandler);
 	server.serv_init(std::atoi(argv[1]), argv[2]);
 	server.run();
 	return EXIT_SUCCESS;
