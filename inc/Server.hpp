@@ -33,6 +33,7 @@
 #include "Channel.hpp"
 #include "Client.hpp"
 #include <map>
+#include <algorithm>
 
 #define MAX_EVENTS 10
 
@@ -106,6 +107,7 @@ public:
 
 	// methode pour fermer tous les fds
 	void closing_sockets();
+	void removeClient(Client* client);
 };
 
 #endif

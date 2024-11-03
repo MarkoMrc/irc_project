@@ -9,6 +9,7 @@ Channel::Channel()
 	this->topic_n = "";
 	this->modeLimit = false;
 	this->modePasswordProtected = false;
+	this->modeInviteOnly = false;
 }
 
 Channel::~Channel(){}
@@ -179,4 +180,14 @@ void Channel::broadcastMessage(const std::string& message, Client* excludeClient
 
 bool Channel::isFull() const {
 		return clients.size() >= limit; // Vérifie si le canal est plein
-	}
+}
+
+void Channel::inviteClient(Client* client) {
+		// Ajoute un client à la liste des invités
+		invitedClients.push_back(client);
+}
+
+bool Channel::isInvited(Client* client) const {
+        // Vérifie si le client est dans la liste des invités
+        return std::find(invitedClients.begin(), invitedClients.end(), client) != invitedClients.end();
+    }

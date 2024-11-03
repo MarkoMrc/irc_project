@@ -18,7 +18,7 @@
 void signalHandler(int signum) {
 	if (signum == SIGINT)
 	{
-		std::cout << "controle C" << std::endl;
+		// std::cout << "controle C" << std::endl;
 		exit(1);
 	}
 }
