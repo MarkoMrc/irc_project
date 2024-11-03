@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: elias <elias@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lebronen <lebronen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/02 09:14:39 by mmaric            #+#    #+#             */
-/*   Updated: 2024/10/29 17:10:31 by elias            ###   ########.fr       */
+/*   Updated: 2024/11/03 12:23:28 by lebronen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,7 @@ private:
 	std::vector<Channel*> channels;
 	int server_socket_fd;
 	int epoll_fd;
+	bool firstConnexion;
 	void handleCapLs(int socket);
 	void handlePass(int socket, const std::string& params, bool firstConnexion, std::string nick, std::string user);
 	void handleNick(int socket, const std::string& params);
@@ -73,6 +74,7 @@ public:
 
 	int getFd();
 	int getPort();
+	bool getFirstConnexion();
 	std::string getPassword();
 	Client *getClient(int fd);
 	Channel *getChannel(std::string name);
@@ -81,6 +83,7 @@ public:
 
 	void setFd(int fd_socket);
 	void setPort(int port);
+	void setFirstConnexion(bool fc);
 	void setPassword(std::string password);
 	void addClient(Client new_client);
 	void addChannel(Channel* new_channel);
