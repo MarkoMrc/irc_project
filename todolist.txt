@@ -33,3 +33,6 @@ faire en sorte que ce soit possible de le faire dans n'importe quel sens ;
 	KICK : verifier qu'il y a le bon nombre de params, verifier que le user est admin, que le user est dans le channel, que la target est bien dans le channel, que le channel exite bien 
 	INVITE : il faut etre dans le channel pour inviter un user ainsi qu'etre admin, il faut que le user existe
 	PRIVMSG : verifier que le user existe, que le message n'est pas vide, si ça s'adresse au chann verifier qu'on est dedans
+
+
+changer le set de USER

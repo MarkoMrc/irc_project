@@ -209,7 +209,14 @@ void Server::handleMode(int socket, const std::string& params) {
 			if (!channel->isModeLimit()) {
 				channel->setModeLimit(true);
 			}
-			channel->setLimit(stoi(words[2]));
+			std::istringstream iss(words[2]);
+			int limit;
+			if (!(iss >> limit)){
+				std::cerr << "Erreur : valeur non valide pour la limite du nombre de clients." << std::endl;
+			}
+			else {
+				channel->setLimit(limit);
+			}
 		}
 	}
 	else if (words[1] == "-l") {
