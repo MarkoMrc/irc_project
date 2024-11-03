@@ -9,9 +9,9 @@ void Server::handleCapLs(int socket) {
 		std::cout << "erreur !client : "<< getClient(socket) << std::endl;
 	};
 
-	// const char *cap_response = "CAP * LS :\r\n";
-	// send(socket, cap_response, strlen(cap_response), 0);
-	// std::cout << "CAP LS" << std::endl;
+	const char *cap_response = "CAP * LS :\r\n";
+	send(socket, cap_response, strlen(cap_response), 0);
+	std::cout << "CAP LS" << std::endl;
 }
 
 void Server::handlePass(int socket, const std::string& params, bool firstConnexion, std::string nick, std::string user) {
@@ -24,6 +24,10 @@ void Server::handlePass(int socket, const std::string& params, bool firstConnexi
 		if (client_password == mdp) {
 			std::cout << "Mot de passe correct." << std::endl;
 			Client *client = getClient(socket);
+			if (!client){
+				std::cout << "erreur !client : "<< getClient(socket) << std::endl;
+				return ;
+			}
 			client->setPswdEnterd(true);
 			const char *msg = "Mot de passe correct. Connexion acceptee.\r\n";
 			send(socket, msg, strlen(msg), 0);
@@ -154,6 +158,7 @@ void Server::handleMode(int socket, const std::string& params) {
 					}
 					else {
 						channel->addAdmin(*mod);
+						std::cout << "Ce client est désormais admin" << std::endl;
 					}
 				}
 				else {
@@ -162,6 +167,7 @@ void Server::handleMode(int socket, const std::string& params) {
 					}
 					else {
 						channel->removeAdmin(mod->getFd());
+						std::cout << "Ce client n'est plus admin" << std::endl;
 					}
 				}
 			}
@@ -177,6 +183,7 @@ void Server::handleMode(int socket, const std::string& params) {
 			}
 			else {
 				channel->setModeInviteOnly(true);
+				std::cout << "Ce channel est désormais sur invitation only" << std::endl;
 			}
 		}
 	}
@@ -190,6 +197,7 @@ void Server::handleMode(int socket, const std::string& params) {
 			}
 			else {
 				channel->setModeInviteOnly(false);
+				std::cout << "Ce channel n'est plus sur invitation Only" << std::endl;
 			}
 		}
 	}
@@ -199,6 +207,7 @@ void Server::handleMode(int socket, const std::string& params) {
 		}
 		else {
 			channel->setModeTopicOp(true);
+			std::cout << "Ce channel est désormais protégé sur le TOPIC" << std::endl;
 		}
 	}
 	else if (words[1] == "-t") {
@@ -211,6 +220,7 @@ void Server::handleMode(int socket, const std::string& params) {
 			}
 			else {
 				channel->setModeTopicOp(false);
+				std::cout << "Ce channel n'est plus protégé sur le TOPIC" << std::endl;
 			}
 		}
 	}
@@ -221,6 +231,7 @@ void Server::handleMode(int socket, const std::string& params) {
 		else {
 			if (!channel->isModePasswordProtected()) {
 				channel->setModePasswordProtected(true);
+				std::cout << "Ce channel est désormais sous mdp" << std::endl;
 			}
 			channel->setPassword(words[2]);
 		}
@@ -235,6 +246,7 @@ void Server::handleMode(int socket, const std::string& params) {
 			}
 			else {
 				channel->setModePasswordProtected(false);
+				std::cout << "Ce channel n'est plus sous mdp" << std::endl;
 			}
 		}
 	}
@@ -245,6 +257,7 @@ void Server::handleMode(int socket, const std::string& params) {
 		else {
 			if (!channel->isModeLimit()) {
 				channel->setModeLimit(true);
+				std::cout << "Ce channel est désormais limité" << std::endl;
 			}
 			std::istringstream iss(words[2]);
 			size_t limit;
@@ -266,6 +279,7 @@ void Server::handleMode(int socket, const std::string& params) {
 			}
 			else {
 				channel->setModeLimit(false);
+				std::cout << "Ce channel n'est plus limité" << std::endl;
 			}
 		}
 	}
@@ -323,16 +337,15 @@ void Server::handleQuit(int socket, const std::string& params) {
 				names_list += (*remainingIt)->getNickname() + " ";
 			}
 			names_list += "\r\n";
-
-			// Envoyer la mise à jour de la liste des noms à tous les clients restants
-			for (std::vector<Client*>::const_iterator remainingIt = clients.begin(); remainingIt != clients.end(); ++remainingIt) {
-				send((*remainingIt)->getFd(), names_list.c_str(), names_list.length(), 0);
-			}
 		}
 		(*it)->removeClient(client->getFd());
 	}
 
+	removeClient(client);
+
 	std::cout << "Client " << client->getNickname() << " QUIT : " << (params.empty() ? "has quit." : params) << std::endl;
+
+	client->setNickname("");
 	const char *msg = "You quit.\r\n";
 	send(socket, msg, strlen(msg), 0);
 	close(socket);
@@ -435,6 +448,16 @@ void Server::handleJoin(int socket, const std::string& params) {
 			return;
 		}
 	}
+
+	 // Vérification si le canal est en mode "invite only"
+    if (channel->isModeInviteOnly()) {
+        if (!channel->isInvited(client)) { // Vérifiez si le client est invité
+            std::cerr << client->getNickname() << " n'est pas invité dans le canal " << channel_name << std::endl;
+            std::string error_message = "Vous devez être invité pour rejoindre ce canal.\r\n";
+            send(socket, error_message.c_str(), error_message.length(), 0);
+            return;
+        }
+    }
 	// const std::vector<Client*>& clients = channel->getClients();
 	// for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
 	//	 std::cout << "Client FD: " << (*it)->getFd() << ", Nickname: " << (*it)->getNickname() << std::endl;
@@ -736,6 +759,7 @@ void Server::handleInvite(int socket, const std::string& params) {
 	return;
 	}
 
+	channel->inviteClient(invitee);
 	// Envoyer l'invitation au client cible
 	std::string inviteMessage = ":" + inviter->getNickname() + " INVITE " + targetNickname + " :" + channelName + "\r\n";
 	send(invitee->getFd(), inviteMessage.c_str(), inviteMessage.length(), 0);

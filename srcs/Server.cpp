@@ -153,6 +153,11 @@ bool Server::isRegistered(int socket) {
 
 void Server::authenticateClient(int socket, const std::string& password, const std::string& nickname, const std::string& username) {
 	Client* client = getClient(socket); // Recupere le client via son socket
+	if (!client){
+		std::cout << "erreur !client : "<< getClient(socket) << std::endl;
+		return ;
+	}
+	(void) password;
 	if (client == NULL) {
 		std::cerr << "Client not found for socket: " << socket << std::endl;
 		return;
@@ -165,7 +170,7 @@ void Server::authenticateClient(int socket, const std::string& password, const s
 	// }
 
 	// Definit le pseudonyme et le nom d'utilisateur pour le client
-	if (!nickname.empty() && !username.empty() && password == this->password){
+	if (!nickname.empty() && !username.empty() && client->isPswdEnterd()){
 		client->setUsername(username);
 		client->setNickname(nickname);
 		client->setLogged(true); // Indique que le client est authentifie
@@ -329,6 +334,10 @@ void Server::handleConnection(int socket) {
 	//bool fcn = true;
 	//bool fcu = true;
 	Client *client = getClient(socket);
+	if (!client) {
+		std::cerr << "Erreur: client non trouvé pour le socket " << socket << std::endl;
+		return; // On ne continue pas si le client n'existe pas
+	}
 	char buffer[1024] = {0};
 	int valread = recv(socket, buffer, sizeof(buffer), 0);
 
@@ -439,22 +448,25 @@ void Server::handleConnection(int socket) {
 				handlePrivmsg(socket, params);
 			} else if (command == "INVITE"  && client->isLogged()) {
 				handleInvite(socket, params);
-			}else {
+			} else {
 				if (!client->isLogged())
 					std::cerr << "Veuillez vous authentifier" << std::endl;
 				else 		
 					std::cerr << "Commande inconnue: " << command << std::endl;
 			}
-
-			// std::cout << "isLogged: " << (getClient(socket)->isLogged() ? "true" : "false") << std::endl;
-			// std::cout << "condition isLogged: " << (getClient(socket)->isLogged() ? "true" : "false") << std::endl;
-			if (!getClient(socket)->isLogged() && !getClient(socket)->getNickname().empty() && !getClient(socket)->getUsername().empty()) {
-				std::string nick = getClient(socket)->getNickname();
-			// std::cout << "password handleconnection " + pass << std::endl;
-				std::string user = getClient(socket)->getUsername();
-			// std::cout << "nickname handleconnection " + nick << std::endl;
-				authenticateClient(socket, pass, nick, user);
-			// std::cout << "after authentication condition isLogged: " << (getClient(socket)->isLogged() ? "true" : "false") << std::endl;
+			// TEST
+			Client* client = getClient(socket);
+			//TEST
+			// if (!client) {
+			// 	std::cerr << "Erreur: client non trouvé pour le socket " << socket << std::endl;
+			// }
+			if (client)
+			{
+				if (!getClient(socket)->isLogged() && !getClient(socket)->getNickname().empty() && !getClient(socket)->getUsername().empty()) {
+					std::string nick = getClient(socket)->getNickname();
+					std::string user = getClient(socket)->getUsername();
+					authenticateClient(socket, pass, nick, user);
+				}
 			}
 		}
 	} else if (valread == 0) {
@@ -483,4 +495,27 @@ void Server::closing_sockets()
 
 std::vector<Client*>& Server::getClients(){
 	return this->clients;
+}
+
+void Server::removeClient(Client* client) {
+    if (!client) {
+        std::cerr << "Erreur: tentative de suppression d'un client nul." << std::endl;
+        return;
+    }
+
+    // Cherchez le client dans la liste
+    for (std::vector<Client*>::iterator it = clients.begin(); it != clients.end(); ++it) {
+        if (*it == client) {
+            // Fermer le socket du client
+            close(client->getFd());
+
+            // Supprimer le client de la liste
+            clients.erase(it);
+            delete client; // Libération de la mémoire
+            std::cout << "Client supprimé de la liste." << std::endl;
+            return;
+        }
+    }
+
+    std::cerr << "Erreur: client non trouvé dans la liste." << std::endl;
 }

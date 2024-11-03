@@ -21,6 +21,7 @@ private:
 	std::string topic_n;
 	std::vector<Client*> clients;
 	std::vector<Client> admins;
+	std::vector<Client*> invitedClients;
 
 public:
 	Channel();
@@ -62,6 +63,9 @@ public:
 	bool isClient(const Client& client) const;
 	void broadcastMessage(const std::string& message, Client* excludeClient);
 	bool isFull() const;
+
+	void inviteClient(Client* client);
+    bool isInvited(Client* client) const;
 	
 
 	std::vector<Client*>& getClients();
