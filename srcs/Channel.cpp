@@ -191,6 +191,6 @@ void Channel::inviteClient(Client* client) {
 }
 
 bool Channel::isInvited(Client* client) const {
-        // Vérifie si le client est dans la liste des invités
-        return std::find(invitedClients.begin(), invitedClients.end(), client) != invitedClients.end();
-    }
+	// Vérifie si le client est dans la liste des invités
+	return std::find(invitedClients.begin(), invitedClients.end(), client) != invitedClients.end();
+}
