@@ -292,33 +292,8 @@ void Server::handleMode(int socket, const std::string& params) {
 	else {
 		std::cerr << "Erreur: mode inconnu" << std::endl;
 	}
-	
+
 }
-
-// void Server::handleQuit(int socket, const std::string& params) {
-// 	std::cout << "Commande QUIT reçue" << std::endl;
-// 	Client *client = getClient(socket);
-// 	// std::cout << "socket " << getClient(socket) << std::endl;
-// 	if (!client){
-// 		std::cout << "erreur !client" << std::endl;
-// 		return;
-// 	}
-// 	// else
-// 		// std::cout << "tout good" << std::endl;
-
-// 	// remove le client de tous les channels auxquels il est connecte
-// 	for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it){
-// 		(*it)->removeClient(client->getFd());
-// 	}
-
-// 	if (params.empty())
-// 		std::cout << "Client " << client->getNickname() << " QUIT :" << " has quit." << std::endl;
-// 	else
-// 		std::cout << "Client " << client->getNickname() << " QUIT :" << params << std::endl;
-// 	const char *msg = "You quit.\r\n";
-// 	send(socket, msg, strlen(msg), 0);
-// 	close(socket);
-// }
 
 void Server::handleQuit(int socket, const std::string& params) {
 	std::cout << "Commande QUIT reçue" << std::endl;
@@ -464,36 +439,14 @@ void Server::handleJoin(int socket, const std::string& params) {
             return;
         }
     }
-	// const std::vector<Client*>& clients = channel->getClients();
-	// for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-	//	 std::cout << "Client FD: " << (*it)->getFd() << ", Nickname: " << (*it)->getNickname() << std::endl;
-	// }
-	// for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-	// 	std::cout << "je rentre dans le check" << std::endl;
-	// 	std::cout << "client= " << client->getFd() << std::endl;
-	// 	std::cout << "it = " << (*it)->getFd() << std::endl;
-	// 	if ((*it)->getFd() == client->getFd()) {
-	// 		std::cout << "it = " << (*it)->getFd() << std::endl;
-	// 		std::cerr << client->getNickname() << " is already in channel " << channel_name << std::endl;
-	// 		return;
-	// 	}
-	// }
-	// std::cout << "channel : " << channel->isModePasswordProtected() << " size : " << arg.size() << " password : " << channel->getPassword() << " arg : " << arg[1] << std::endl;
+
 	// verification du mot de pass
 	if (channel->isModePasswordProtected() && (arg.size() < 2 || arg[1] != channel->getPassword()))
 	{
 		std::cout << "error password" << std::endl;
 		return;
 	}
-	// if (channel->isModePasswordProtected()) {
-		// std::cout << "Mode protégé activé pour le canal" << std::endl;
-		// if (arg.size() < 2) {
-		//	 std::cout << "Mot de passe manquant pour rejoindre le canal." << std::endl;
-		// } else {
-		//	 std::cout << "Mot de passe fourni : " << arg[1] << ", mot de passe attendu : " << channel->getPassword() << std::endl;
-		// }
-		// channel->addClient(client);
-	// }
+
 	if (channel->isModeLimit()){
 		std::cout << "je rentre dansle check de la limite" << std::endl;
 		std::cout << "Limit: " << channel->getLimit() << std::endl;

@@ -92,52 +92,6 @@ void Server::addChannel(Channel* new_channel){
 	this->channels.push_back(new_channel);
 }
 
-bool Server::askPassword(int socket)
-{
-	const char *ask_password = "Veuillez entrer le mot de passe:\n";
-	send(socket, ask_password, strlen(ask_password), 0);
-
-	// Lire la reponse du client
-	char buffer[1024] = {0};
-	int valread = recv(socket, buffer, 1024, 0);
-
-	std::cout << "test :" << buffer << std::endl;
-
-	// Gerer le cas ou la reception echoue ou la connexion est fermee
-	if (valread <= 0)
-	{
-		std::cerr << "Erreur lors de la reception ou connexion fermee." << std::endl;
-		return false;
-	}
-	if (valread > 0)
-	{
-		std::cout << "buffer :" << buffer << std::endl;
-	}
-
-	// Supprimer le saut de ligne s'il y en a
-	if (buffer[valread - 1] == '\n' || buffer[valread - 1] == '\r' )
-		buffer[valread - 1] = '\0';  // Pour enlever le '\n' ajoute par le client
-
-	// Comparer le mot de passe fourni avec celui du serveur
-	if (strcmp(password.c_str(), buffer) == 0)
-	{
-		std::cout << "test :" << buffer << std::endl;
-		std::cout << "Mot de passe correct. Connexion autorisee." << std::endl;
-		const char *welcome_message = "Bienvenue sur ce serveur IRC!\n";
-		send(socket, welcome_message, strlen(welcome_message), 0);
-		return true;
-	}
-	else
-	{
-		const char *ask_password = "Veuillez entrer le mot de passe:\n";
-		send(socket, ask_password, strlen(ask_password), 0);
-		int valread = recv(socket, buffer, 1024, 0);
-		std::cout << "test :" << buffer << std::endl;
-		std::cout << "Mot de passe incorrect. Connexion refusee." << std::endl;
-		(void) valread;
-		return false;
-	}
-}
 
 bool Server::isRegistered(int socket) {
 	Client* client = getClient(socket);
@@ -164,13 +118,6 @@ void Server::authenticateClient(int socket, const std::string& password, const s
 		return;
 	}
 
-	// if (!password.empty() && password != this->password) {
-	//	 std::cerr << "Mot de passe incorrect pour le client sur le socket: " << socket << std::endl;
-	//	 // close(socket);
-	//	 // return;
-	// }
-
-	// Definit le pseudonyme et le nom d'utilisateur pour le client
 	if (!nickname.empty() && !username.empty() && client->isPswdEnterd()){
 		client->setUsername(username);
 		client->setNickname(nickname);
@@ -519,4 +466,59 @@ void Server::removeClient(Client* client) {
     }
 
     std::cerr << "Erreur: client non trouvé dans la liste." << std::endl;
+}
+
+
+
+
+
+
+
+
+
+bool Server::askPassword(int socket)
+{
+	const char *ask_password = "Veuillez entrer le mot de passe:\n";
+	send(socket, ask_password, strlen(ask_password), 0);
+
+	// Lire la reponse du client
+	char buffer[1024] = {0};
+	int valread = recv(socket, buffer, 1024, 0);
+
+	std::cout << "test :" << buffer << std::endl;
+
+	// Gerer le cas ou la reception echoue ou la connexion est fermee
+	if (valread <= 0)
+	{
+		std::cerr << "Erreur lors de la reception ou connexion fermee." << std::endl;
+		return false;
+	}
+	if (valread > 0)
+	{
+		std::cout << "buffer :" << buffer << std::endl;
+	}
+
+	// Supprimer le saut de ligne s'il y en a
+	if (buffer[valread - 1] == '\n' || buffer[valread - 1] == '\r' )
+		buffer[valread - 1] = '\0';  // Pour enlever le '\n' ajoute par le client
+
+	// Comparer le mot de passe fourni avec celui du serveur
+	if (strcmp(password.c_str(), buffer) == 0)
+	{
+		std::cout << "test :" << buffer << std::endl;
+		std::cout << "Mot de passe correct. Connexion autorisee." << std::endl;
+		const char *welcome_message = "Bienvenue sur ce serveur IRC!\n";
+		send(socket, welcome_message, strlen(welcome_message), 0);
+		return true;
+	}
+	else
+	{
+		const char *ask_password = "Veuillez entrer le mot de passe:\n";
+		send(socket, ask_password, strlen(ask_password), 0);
+		int valread = recv(socket, buffer, 1024, 0);
+		std::cout << "test :" << buffer << std::endl;
+		std::cout << "Mot de passe incorrect. Connexion refusee." << std::endl;
+		(void) valread;
+		return false;
+	}
 }
