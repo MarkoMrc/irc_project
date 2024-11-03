@@ -38,7 +38,7 @@ public:
 	void setModePasswordProtected(bool value);
 	void setModeLimit(bool value);
 	void setPassword(const std::string& pass);
-	void setLimit(size_t limit);
+	void setLimit(size_t valeur);
 
 
 	bool isModeInviteOnly() const { return modeInviteOnly; }
@@ -52,6 +52,7 @@ public:
 	int getTopic();
 	int getMax();
 	int getClient_N();
+	size_t getLimit();
 	Client *getClient(int fd);
 	Client *getAdmin(int fd);
 

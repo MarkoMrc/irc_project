@@ -6,7 +6,7 @@
 /*   By: lebronen <lebronen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/02 09:14:39 by mmaric            #+#    #+#             */
-/*   Updated: 2024/11/03 12:23:28 by lebronen         ###   ########.fr       */
+/*   Updated: 2024/11/03 22:15:52 by lebronen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,6 +44,8 @@ class Server
 {
 private:
 	int port;
+	static Server *server;
+	//static bool isCreated;
 	std::string password;
 	std::vector<Client*> clients;
 	std::vector<Channel*> channels;
@@ -82,6 +84,7 @@ public:
 	Channel *getChannel(std::string name);
 	Client *getClient(const std::string& nickname);
 	std::vector<Client*>& getClients();
+	static Server *getServer();
 
 	void setFd(int fd_socket);
 	void setPort(int port);
@@ -108,6 +111,8 @@ public:
 	// methode pour fermer tous les fds
 	void closing_sockets();
 	void removeClient(Client* client);
+    void signal_handler(int signal);
+    void catch_signal();
 };
 
 #endif
