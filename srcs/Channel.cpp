@@ -4,7 +4,6 @@ Channel::Channel()
 {
 	this->key = 0;
 	this->topic = 0;
-	this->limit = 10;
 	this->name = "";
 	this->topic_n = "";
 	this->modeLimit = false;
@@ -77,8 +76,12 @@ void Channel::setPassword(const std::string& pass){
 	password = pass;
 }
 
-void Channel::setLimit(size_t limit){
-	limit = limit;
+void Channel::setLimit(size_t valeur){
+	limit = valeur;
+}
+
+size_t Channel::getLimit(){
+	return this->limit;
 }
 
 int Channel::getClient_N(){

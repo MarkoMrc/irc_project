@@ -253,14 +253,17 @@ void Server::handleMode(int socket, const std::string& params) {
 		}
 	}
 	else if (words[1] == "+l") {
-		if (words.size() != 4) {
+		if (words.size() != 3) {
 			std::cerr << "Erreur: le mode +l nécessite 3 paramètres (channel mode nbLimite)" << std::endl;
 		}
 		else {
 			if (!channel->isModeLimit()) {
 
 				channel->setModeLimit(true);
+				std::cout << "Ce channel est limité" << std::endl;
 				channel->setLimit(atoi(words[2].c_str()));
+				std::cout << atoi(words[2].c_str()) << std::endl;
+				std::cout << channel->getLimit() << std::endl;
 			}
 			std::istringstream iss(words[2]);
 			size_t limit;
@@ -492,7 +495,10 @@ void Server::handleJoin(int socket, const std::string& params) {
 		// channel->addClient(client);
 	// }
 	if (channel->isModeLimit()){
-		if (channel->isFull()) {
+		std::cout << "je rentre dansle check de la limite" << std::endl;
+		std::cout << "Limit: " << channel->getLimit() << std::endl;
+		if (clients.size() >= channel->getLimit()) {
+			std::cout << "Nombre de clients dans le canal dans le check: " << clients.size() << std::endl;
 			std::cerr << "Le canal " << channel_name << " est plein, impossible de rejoindre." << std::endl;
 			std::string error_message = "Le canal est plein, vous ne pouvez pas rejoindre.\r\n";
 			send(socket, error_message.c_str(), error_message.length(), 0);
@@ -501,6 +507,7 @@ void Server::handleJoin(int socket, const std::string& params) {
 	}
 
 	channel->addClient(client);
+	std::cout << "Nombre de clients dans le canal après ajout: " << clients.size() << std::endl;
 	std::cout << "Clients après ajout:" << std::endl;
 	for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
 		std::cout << "Client FD: " << (*it)->getFd() << ", Nickname: " << (*it)->getNickname() << std::endl;
