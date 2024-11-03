@@ -22,6 +22,8 @@ private:
 	int fd;
 	std::string username;
 	std::string nickname;
+	std::string servername;
+	std::string realname;
 	std::string tmp_nick;
 	std::string tmp_user;
 	std::string ip_add;
@@ -43,6 +45,8 @@ public:
 	#nickname, ip, fd, hostname
 	*/
 	std::string getUsername();
+	std::string getRealname();
+	std::string getServername();
 	std::string getNickname() const;
 	int getFd() const;
 	std::string getIp_add();
@@ -55,6 +59,8 @@ public:
 	#nickname, fd, ip
 	*/
 	void setUsername(const std::string& username);
+	void setServername(const std::string& servername);
+	void setRealname(const std::string& realname);
 	void setNickname(const std::string& nickname);
 	void setTmpNick(const std::string& tmp_nick);
 	void setTmpUser(const std::string& tmp_user);

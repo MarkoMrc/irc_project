@@ -112,13 +112,13 @@ void Channel::addAdmin(Client new_client){
 }
 
 bool Channel::isAdmin(const Client& client) const {
-    // Parcourir la liste des opérateurs et vérifier si le client est présent
-    for (std::vector<Client>::const_iterator it = admins.begin(); it != admins.end(); ++it) {
-        if (it->getFd() == client.getFd()) {
-            return true; // Le client est un opérateur
-        }
-    }
-    return false; // Le client n'est pas un opérateur
+	// Parcourir la liste des opérateurs et vérifier si le client est présent
+	for (std::vector<Client>::const_iterator it = admins.begin(); it != admins.end(); ++it) {
+		if (it->getFd() == client.getFd()) {
+			return true; // Le client est un opérateur
+		}
+	}
+	return false; // Le client n'est pas un opérateur
 }
 
 bool Channel::isClient(const Client& client) const {
@@ -162,21 +162,21 @@ std::vector<Client*>& Channel::getClients(){
 }
 
 void Channel::broadcastMessage(const std::string& message, Client* excludeClient) {
-    // Parcours du vecteur de clients en utilisant un itérateur
-    for (std::vector<Client*>::iterator it = clients.begin(); it != clients.end(); ++it) {
-        Client* client = *it;
-        
-        // Si excludeClient est défini, on exclut ce client de la diffusion
-        if (excludeClient != NULL && client == excludeClient) {
-            continue;
-        }
-        
-        // Envoi du message au client
-        send(client->getFd(), message.c_str(), message.length(), 0);
-    }
+	// Parcours du vecteur de clients en utilisant un itérateur
+	for (std::vector<Client*>::iterator it = clients.begin(); it != clients.end(); ++it) {
+		Client* client = *it;
+		
+		// Si excludeClient est défini, on exclut ce client de la diffusion
+		if (excludeClient != NULL && client == excludeClient) {
+			continue;
+		}
+		
+		// Envoi du message au client
+		send(client->getFd(), message.c_str(), message.length(), 0);
+	}
 }
 
 
 bool Channel::isFull() const {
-        return clients.size() >= limit; // Vérifie si le canal est plein
-    }
+		return clients.size() >= limit; // Vérifie si le canal est plein
+	}

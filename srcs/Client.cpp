@@ -3,12 +3,12 @@
 Client::Client()
 {
 	this->fd = 0;
-	this->username = "";
-	this->nickname = "";
-	this->ip_add = "";
+	// this->username = "";
+	// this->nickname = "";
+	// this->ip_add = "";
 	this->logged_in = false;
 	this->registered = false;
-	this->buff = "";
+	// this->buff = "";
 	this->isOperator = false;
 }
 
@@ -35,6 +35,14 @@ Client &Client::operator=(Client const &src){
 
 std::string Client::getUsername(){
 	return this->username;
+}
+
+std::string Client::getRealname(){
+	return this->realname;
+}
+
+std::string Client::getServername(){
+	return this->servername;
 }
 
 std::string Client::getNickname() const{
@@ -68,6 +76,15 @@ std::string Client::getTmpUser() {
 void Client::setUsername(const std::string& username){
 	this->username = username;
 }
+
+void Client::setServername(const std::string& servername){
+	this->servername = servername;
+}
+
+void Client::setRealname(const std::string& realname){
+	this->realname = realname;
+}
+
 
 void Client::setBuff(std::string buff){
 	(void) buff;

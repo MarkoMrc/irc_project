@@ -29,8 +29,10 @@ void Server::handlePass(int socket, const std::string& params, bool firstConnexi
 			send(socket, msg, strlen(msg), 0);
 			if (firstConnexion)
 			{
-				handleNick(socket, nick);
-				handleUser(socket, user);
+				if (!nick.empty())
+					handleNick(socket, nick);
+				if (!user.empty())
+					handleUser(socket, user);
 			}
 			else {
 				(void)nick;
@@ -61,20 +63,24 @@ void Server::handleNick(int socket, const std::string& params) {
 	if (!client){
 		std::cout << "erreur !client : "<< getClient(socket) << std::endl;
 	}
-	if (params.empty())
+	if (params.empty()) {
 		std::cout << "message d'erreur" << std::endl;
+		return ;
+	}
 	if (!checkNick(params))
 	{
 		std::cout << "le nickname doit etre compose uniquement de lettre chiffre ou tiret" << std::endl; // mettre les bon messages d'erreur
 		return;
 	}
-	std::vector<Client> clins = getClients();
-	for (long unsigned int i = 0; i < clins.size(); i++)
-		if (clins[i].getNickname() == params)
-		{
-			std::cout << "nickname deja existant" << std::endl; // mettre les bon messages d'erreur
+	std::vector<Client*> clients = getClients();
+
+	// Vérifier si le nouveau nickname existe déjà
+	for (std::vector<Client*>::iterator it = clients.begin(); it != clients.end(); ++it) {
+		if ((*it)->getNickname() == params) {
+			std::cout << "Erreur : le nickname '" << params << "' existe déjà." << std::endl;
 			return;
 		}
+	}
 	client->setNickname(params);  // Met a jour le surnom du client
 	std::cout << "Client socket " << socket << " set nickname to: " << client->getNickname() << std::endl;
 
@@ -85,25 +91,33 @@ void Server::handleUser(int socket, const std::string& params) {
 	std::cout << "Commande USER reçue avec params: " << params << std::endl;
 
 	std::istringstream iss(params);
-	std::string nickname, hostname, servername, username;
+	std::string realname, hostname, servername, username;
 
-	std::getline(iss, nickname, ' ');
+	std::getline(iss, username, ' ');
 	std::getline(iss, hostname, ' ');
 	std::getline(iss, servername, ':');
-	std::getline(iss, username, ' ');  // username est precede de ':'
-	std::cout << "Username : " << username << std::endl;
+	std::getline(iss, realname, ' ');  // username est precede de ':'
 	Client *client = getClient(socket);
 	if (client) {
-		std::cout << "client existant" << std::endl;
-		client->setNickname(nickname);
-		client->setHostname(hostname);
-		client->setUsername(username);
-		std::cout << "Utilisateur defini nickname : " << client->getNickname() << std::endl;
-		std::cout << "Utilisateur defini hostname : " << client->getHostname() << std::endl;
-		std::cout << "Utilisateur defini username : " << client->getUsername() << std::endl;
+		if (!username.empty()) {
+			client->setUsername(username);
+			std::cout << "Utilisateur defini username : " << client->getUsername() << std::endl;
+		}
+		if (!hostname.empty()) {
+			client->setHostname(hostname);
+			std::cout << "Utilisateur defini hostname : " << client->getHostname() << std::endl;
+		}
+		if (!servername.empty()) {
+			client->setServername(servername);
+			std::cout << "Utilisateur defini servername : " << client->getServername() << std::endl;
+		}
+		if (!realname.empty()) {
+			client->setRealname(realname);
+			std::cout << "Utilisateur defini realname : " << client->getRealname() << std::endl;
+		}
 	} else {
 		std::cerr << "Client introuvable pour le socket : " << socket << std::endl;
-	}
+		}
 }
 
 void Server::handleMode(int socket, const std::string& params) {
@@ -287,41 +301,41 @@ void Server::handleMode(int socket, const std::string& params) {
 // }
 
 void Server::handleQuit(int socket, const std::string& params) {
-    std::cout << "Commande QUIT reçue" << std::endl;
-    Client *client = getClient(socket);
-    if (!client) {
-        std::cout << "Erreur : client introuvable." << std::endl;
-        return;
-    }
+	std::cout << "Commande QUIT reçue" << std::endl;
+	Client *client = getClient(socket);
+	if (!client) {
+		std::cout << "Erreur : client introuvable." << std::endl;
+		return;
+	}
 
-    // Supprimer le client de tous les canaux auxquels il est connecté
-    for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it) {
-        Channel* channel = *it;
-        if (channel->isClient(*client)) {
-            // Notifier les autres clients que ce client a quitté
-            std::string quit_message = ":" + client->getNickname() + " QUIT :" + (params.empty() ? "has quit." : params) + "\r\n";
-            channel->broadcastMessage(quit_message, client);
+	// Supprimer le client de tous les canaux auxquels il est connecté
+	for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it) {
+		Channel* channel = *it;
+		if (channel->isClient(*client)) {
+			// Notifier les autres clients que ce client a quitté
+			std::string quit_message = ":" + client->getNickname() + " QUIT :" + (params.empty() ? "has quit." : params) + "\r\n";
+			channel->broadcastMessage(quit_message, client);
 
-            // Mettre à jour la liste des noms pour tous les clients restants
-            std::string names_list = "= " + channel->getName() + " :";
-            const std::vector<Client*>& clients = channel->getClients();
-            for (std::vector<Client*>::const_iterator remainingIt = clients.begin(); remainingIt != clients.end(); ++remainingIt) {
-                names_list += (*remainingIt)->getNickname() + " ";
-            }
-            names_list += "\r\n";
+			// Mettre à jour la liste des noms pour tous les clients restants
+			std::string names_list = "= " + channel->getName() + " :";
+			const std::vector<Client*>& clients = channel->getClients();
+			for (std::vector<Client*>::const_iterator remainingIt = clients.begin(); remainingIt != clients.end(); ++remainingIt) {
+				names_list += (*remainingIt)->getNickname() + " ";
+			}
+			names_list += "\r\n";
 
-            // Envoyer la mise à jour de la liste des noms à tous les clients restants
-            for (std::vector<Client*>::const_iterator remainingIt = clients.begin(); remainingIt != clients.end(); ++remainingIt) {
-                send((*remainingIt)->getFd(), names_list.c_str(), names_list.length(), 0);
-            }
-        }
-        (*it)->removeClient(client->getFd());
-    }
+			// Envoyer la mise à jour de la liste des noms à tous les clients restants
+			for (std::vector<Client*>::const_iterator remainingIt = clients.begin(); remainingIt != clients.end(); ++remainingIt) {
+				send((*remainingIt)->getFd(), names_list.c_str(), names_list.length(), 0);
+			}
+		}
+		(*it)->removeClient(client->getFd());
+	}
 
-    std::cout << "Client " << client->getNickname() << " QUIT : " << (params.empty() ? "has quit." : params) << std::endl;
-    const char *msg = "You quit.\r\n";
-    send(socket, msg, strlen(msg), 0);
-    close(socket);
+	std::cout << "Client " << client->getNickname() << " QUIT : " << (params.empty() ? "has quit." : params) << std::endl;
+	const char *msg = "You quit.\r\n";
+	send(socket, msg, strlen(msg), 0);
+	close(socket);
 }
 
 
@@ -401,30 +415,30 @@ void Server::handleJoin(int socket, const std::string& params) {
 	}
 
 	const std::vector<Client*>& clients = channel->getClients();
-    std::cout << "Clients dans le canal " << channel_name << ":" << std::endl;
+	std::cout << "Clients dans le canal " << channel_name << ":" << std::endl;
 
 	// Vérifiez la taille du vecteur
 	std::cout << "Nombre de clients dans le canal: " << clients.size() << std::endl;
 
 	for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-	    std::cout << "Client FD: " << (*it)->getFd() << ", Nickname: " << (*it)->getNickname() << std::endl;
+		std::cout << "Client FD: " << (*it)->getFd() << ", Nickname: " << (*it)->getNickname() << std::endl;
 	}
 
 	// Vérification si le client est déjà dans le canal
 	for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-	    std::cout << "Je rentre dans le check" << std::endl;
-	    std::cout << "client= " << client->getFd() << std::endl;
-	    std::cout << "it = " << (*it)->getFd() << std::endl;
+		std::cout << "Je rentre dans le check" << std::endl;
+		std::cout << "client= " << client->getFd() << std::endl;
+		std::cout << "it = " << (*it)->getFd() << std::endl;
 
-	    if ((*it)->getFd() == client->getFd()) {
-	        std::cerr << client->getNickname() << " est déjà dans le canal " << channel_name << std::endl;
-	        return;
-	    }
+		if ((*it)->getFd() == client->getFd()) {
+			std::cerr << client->getNickname() << " est déjà dans le canal " << channel_name << std::endl;
+			return;
+		}
 	}
 	// const std::vector<Client*>& clients = channel->getClients();
 	// for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-    //     std::cout << "Client FD: " << (*it)->getFd() << ", Nickname: " << (*it)->getNickname() << std::endl;
-    // }
+	//	 std::cout << "Client FD: " << (*it)->getFd() << ", Nickname: " << (*it)->getNickname() << std::endl;
+	// }
 	// for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
 	// 	std::cout << "je rentre dans le check" << std::endl;
 	// 	std::cout << "client= " << client->getFd() << std::endl;
@@ -463,7 +477,7 @@ void Server::handleJoin(int socket, const std::string& params) {
 	channel->addClient(client);
 	std::cout << "Clients après ajout:" << std::endl;
 	for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-	    std::cout << "Client FD: " << (*it)->getFd() << ", Nickname: " << (*it)->getNickname() << std::endl;
+		std::cout << "Client FD: " << (*it)->getFd() << ", Nickname: " << (*it)->getNickname() << std::endl;
 	}
 
 
@@ -530,84 +544,84 @@ void Server::handleTopic(int socket, const std::string& params) {
 void Server::handleKick(int socket, const std::string& params) {
 	std::cout << "Commande KICK reçue avec params: " << params << std::endl;
 	std::vector<std::string> parsedParams;
-    std::istringstream iss(params);
-    std::string word;
+	std::istringstream iss(params);
+	std::string word;
 
-    // Séparer les paramètres par espace
-    while (iss >> word) {
-        parsedParams.push_back(word);
-    }
+	// Séparer les paramètres par espace
+	while (iss >> word) {
+		parsedParams.push_back(word);
+	}
 
-    // Vérification du nombre minimum de paramètres attendus (deux : canal et pseudo de l'utilisateur)
-    if (parsedParams.size() < 2) {
-        std::cerr << "Erreur : Paramètres insuffisants pour la commande KICK" << std::endl;
-        return;
-    }
+	// Vérification du nombre minimum de paramètres attendus (deux : canal et pseudo de l'utilisateur)
+	if (parsedParams.size() < 2) {
+		std::cerr << "Erreur : Paramètres insuffisants pour la commande KICK" << std::endl;
+		return;
+	}
 
-    // Extraction des paramètres
-    std::string channelName = parsedParams[0];
-    std::string targetNickname = parsedParams[1];
-    std::string reason;
+	// Extraction des paramètres
+	std::string channelName = parsedParams[0];
+	std::string targetNickname = parsedParams[1];
+	std::string reason;
 
-    // Si une raison est fournie, on la reconstruit à partir des éléments restants
-    if (parsedParams.size() > 2) {
-        reason = params.substr(params.find(parsedParams[2]));  // Recréer la raison à partir du troisième mot
-    }
+	// Si une raison est fournie, on la reconstruit à partir des éléments restants
+	if (parsedParams.size() > 2) {
+		reason = params.substr(params.find(parsedParams[2]));  // Recréer la raison à partir du troisième mot
+	}
 
-    // Récupérer le client émetteur de la commande KICK
-    Client *kicker = getClient(socket);
-    if (!kicker) {
-        std::cerr << "Erreur : client émetteur introuvable pour le socket " << socket << std::endl;
-        return;
-    }
+	// Récupérer le client émetteur de la commande KICK
+	Client *kicker = getClient(socket);
+	if (!kicker) {
+		std::cerr << "Erreur : client émetteur introuvable pour le socket " << socket << std::endl;
+		return;
+	}
 
-    // Récupérer le canal
-    Channel *channel = getChannel(channelName);
-    if (!channel) {
-        std::cerr << "Erreur : le canal " << channelName << " n'existe pas" << std::endl;
-        return;
-    }
+	// Récupérer le canal
+	Channel *channel = getChannel(channelName);
+	if (!channel) {
+		std::cerr << "Erreur : le canal " << channelName << " n'existe pas" << std::endl;
+		return;
+	}
 
-    // Vérifier si l'émetteur est membre du canal et a les droits nécessaires pour expulser
-    if (!channel->isClient(*kicker)) {
-        std::cerr << "Erreur : vous n'êtes pas membre du canal " << channelName << std::endl;
-        return;
-    }
-    if (!channel->isAdmin(*kicker)) {
-        std::cerr << "Erreur : vous n'avez pas la permission d'expulser dans ce canal" << std::endl;
-        return;
-    }
+	// Vérifier si l'émetteur est membre du canal et a les droits nécessaires pour expulser
+	if (!channel->isClient(*kicker)) {
+		std::cerr << "Erreur : vous n'êtes pas membre du canal " << channelName << std::endl;
+		return;
+	}
+	if (!channel->isAdmin(*kicker)) {
+		std::cerr << "Erreur : vous n'avez pas la permission d'expulser dans ce canal" << std::endl;
+		return;
+	}
 
-    // Récupérer le client cible de l'expulsion
-    Client *kickee = getClient(targetNickname);
-    if (!kickee) {
-        std::cerr << "Erreur : le client " << targetNickname << " n'existe pas" << std::endl;
-        return;
-    }
+	// Récupérer le client cible de l'expulsion
+	Client *kickee = getClient(targetNickname);
+	if (!kickee) {
+		std::cerr << "Erreur : le client " << targetNickname << " n'existe pas" << std::endl;
+		return;
+	}
 
-    // Vérifier si le client est bien dans le canal
-    if (!channel->isClient(*kickee)) {
-        std::cerr << "Erreur : " << targetNickname << " n'est pas dans le canal " << channelName << std::endl;
-        return;
-    }
+	// Vérifier si le client est bien dans le canal
+	if (!channel->isClient(*kickee)) {
+		std::cerr << "Erreur : " << targetNickname << " n'est pas dans le canal " << channelName << std::endl;
+		return;
+	}
 
-    // Créer le message de kick à envoyer à tous les membres du canal
-    std::string kickMessage = ":" + kicker->getNickname() + " KICK " + channelName + " " + targetNickname;
-    if (!reason.empty()) {
-        kickMessage += " :" + reason;
-    }
-    kickMessage += "\r\n";
+	// Créer le message de kick à envoyer à tous les membres du canal
+	std::string kickMessage = ":" + kicker->getNickname() + " KICK " + channelName + " " + targetNickname;
+	if (!reason.empty()) {
+		kickMessage += " :" + reason;
+	}
+	kickMessage += "\r\n";
 
-    // Envoyer le message à tous les membres du canal
-    channel->broadcastMessage(kickMessage, kickee);
+	// Envoyer le message à tous les membres du canal
+	channel->broadcastMessage(kickMessage, kickee);
 
-    // Retirer le client du canal
-    channel->removeClient(kickee->getFd());
-    std::cout << "Client " << targetNickname << " expulsé du canal " << channelName << " par " << kicker->getNickname();
-    if (!reason.empty()) {
-        std::cout << " pour la raison : " << reason;
-    }
-    std::cout << std::endl;
+	// Retirer le client du canal
+	channel->removeClient(kickee->getFd());
+	std::cout << "Client " << targetNickname << " expulsé du canal " << channelName << " par " << kicker->getNickname();
+	if (!reason.empty()) {
+		std::cout << " pour la raison : " << reason;
+	}
+	std::cout << std::endl;
 }
 
 void Server::handlePrivmsg(int socket, const std::string& params) {

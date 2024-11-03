@@ -40,18 +40,18 @@ std::string Server::getPassword(){
 }
 
 Client* Server::getClient(int fd) {
-	for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
-		if (it->getFd() == fd) {
-			return &(*it);
+	for (std::vector<Client*>::iterator it = clients.begin(); it != clients.end(); ++it) {
+		if ((*it)->getFd() == fd) {
+			return (*it);
 		}
 	}
 	return NULL;
 }
 
 Client* Server::getClient(const std::string& nickname) {
-	for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
-		if (it->getNickname() == nickname) {
-			return &(*it);
+	for (std::vector<Client*>::iterator it = clients.begin(); it != clients.end(); ++it) {
+		if ((*it)->getNickname() == nickname) {
+			return (*it);
 		}
 	}
 	return NULL;
@@ -84,7 +84,7 @@ void Server::setPassword(std::string password){
 
 
 void Server::addClient(Client* new_client){
-	this->clients.push_back(*new_client);
+	this->clients.push_back(new_client);
 }
 
 void Server::addChannel(Channel* new_channel){
@@ -175,6 +175,15 @@ void Server::authenticateClient(int socket, const std::string& password, const s
 	}
 }
 
+bool Server::isNewClient(int client_socket) const {
+    for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
+        if ((*it)->getFd() == client_socket) {
+            return false; // Le client existe déjà
+        }
+    }
+    return true; // Le client est nouveau
+}
+
 void Server::acceptClient() {
 	struct sockaddr_in client_addr;
 	socklen_t client_addr_len = sizeof(client_addr);
@@ -184,6 +193,17 @@ void Server::acceptClient() {
 		return;
 	}
 	std::cout << "Nouvelle connexion acceptee, socket client : " << client_socket << std::endl;
+
+	// Vérifie si le client est nouveau
+    if (!isNewClient(client_socket)) {
+        std::cout << "Client déjà existant avec socket : " << client_socket << std::endl;
+        // close(client_socket);  // Fermer la connexion car le client existe déjà
+        // return;
+		setFirstConnexion(false);
+    }
+	else {
+		setFirstConnexion(true);
+	}
 
 	// Rendre le socket client non bloquant
 	setSocketBlockingMode(client_socket);
@@ -205,7 +225,7 @@ void Server::acceptClient() {
 	new_client->setPswdEnterd(false);
 	// Ajouter le client a la liste des clients du serveur
 	addClient(new_client);
-	// clients.push_back(new_client);
+	clients.push_back(new_client);
 }
 
 // Definir une methode pour rendre un socket non bloquant
@@ -373,7 +393,7 @@ void Server::handleConnection(int socket) {
 			} else if (command == "PASS") {
 				if (paramList.size() == 1) {
 					//fc = fcn && fcu;
-					std::cout << "nick = " << client->getTmpNick() << std::endl;
+					// std::cout << "nick = " << client->getTmpNick() << std::endl;
 					handlePass(socket, paramList[0], getFirstConnexion(), client->getTmpNick(), client->getTmpUser());
 					pass = paramList[0];
 					setFirstConnexion(false);
@@ -399,9 +419,9 @@ void Server::handleConnection(int socket) {
 				}
 				else
 					handleUser(socket, params);
-			} else if (command == "OPER") {
+			} else if (command == "OPER" && client->isLogged()) {
 				handleOper(socket, params);
-			} else if (command == "MODE") {
+			} else if (command == "MODE" && client->isLogged()) {
 				if (paramList.size() < 2) {
 					std::cerr << "Erreur: MODE nécessite au moins 2 paramètres" << std::endl;
 				} else {
@@ -409,18 +429,21 @@ void Server::handleConnection(int socket) {
 				}
 			} else if (command == "QUIT") {
 				handleQuit(socket, params);
-			} else if (command == "JOIN") {
+			} else if (command == "JOIN"  && client->isLogged()) {
 				handleJoin(socket, params);
-			} else if (command == "TOPIC") {
+			} else if (command == "TOPIC"  && client->isLogged()) {
 				handleTopic(socket, params);
-			} else if (command == "KICK") {
+			} else if (command == "KICK"  && client->isLogged()) {
 				handleKick(socket, params);
-			} else if (command == "PRIVMSG") {
+			} else if (command == "PRIVMSG"  && client->isLogged()) {
 				handlePrivmsg(socket, params);
-			} else if (command == "PRIVMSG") {
+			} else if (command == "INVITE"  && client->isLogged()) {
 				handleInvite(socket, params);
 			}else {
-				std::cerr << "Commande inconnue: " << command << std::endl;
+				if (!client->isLogged())
+					std::cerr << "Veuillez vous authentifier" << std::endl;
+				else 		
+					std::cerr << "Commande inconnue: " << command << std::endl;
 			}
 
 			// std::cout << "isLogged: " << (getClient(socket)->isLogged() ? "true" : "false") << std::endl;
@@ -452,13 +475,12 @@ void Server::handleConnection(int socket) {
 void Server::closing_sockets()
 {
 	close(server_socket_fd);
-	std::vector<Client>::iterator it;
+	std::vector<Client*>::iterator it;
 	for (it = clients.begin(); it != clients.end(); it++) {
-		close((*it).getFd());
+		close((*it)->getFd());
 	}
 }
 
-std::vector<Client> Server::getClients()
-{
-	return clients;
+std::vector<Client*>& Server::getClients(){
+	return this->clients;
 }

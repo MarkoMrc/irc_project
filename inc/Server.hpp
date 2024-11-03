@@ -44,7 +44,7 @@ class Server
 private:
 	int port;
 	std::string password;
-	std::vector<Client> clients;
+	std::vector<Client*> clients;
 	std::vector<Channel*> channels;
 	int server_socket_fd;
 	int epoll_fd;
@@ -80,11 +80,12 @@ public:
 	Client *getClient(int fd);
 	Channel *getChannel(std::string name);
 	Client *getClient(const std::string& nickname);
-	std::vector<Client> getClients();
+	std::vector<Client*>& getClients();
 
 	void setFd(int fd_socket);
 	void setPort(int port);
 	void setFirstConnexion(bool fc);
+	bool isNewClient(int client_socket) const;
 	void setPassword(std::string password);
 	void addClient(Client* new_client);
 	void addChannel(Channel* new_channel);
