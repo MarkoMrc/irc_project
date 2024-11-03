@@ -134,9 +134,11 @@ void Server::handleMode(int socket, const std::string& params) {
 	Channel *channel = getChannel(words[0]);
 	if (!channel) {
 		std::cerr << "Erreur: le channel spécifié n'existe pas" << std::endl;
+		return ;
 	}
 	if (!channel->isAdmin(*client)) {
 		std::cerr << "Erreur: permission non accordée car vous n'êtes pas opérateur sur ce channel" << std::endl;
+		return ;
 	}
 	if (words[1] == "+o" || words[1] == "-o") {
 		if (words.size() < 3) {
@@ -239,12 +241,14 @@ void Server::handleMode(int socket, const std::string& params) {
 		}
 	}
 	else if (words[1] == "+l") {
-		if (words.size() != 3) {
+		if (words.size() != 4) {
 			std::cerr << "Erreur: le mode +l nécessite 3 paramètres (channel mode nbLimite)" << std::endl;
 		}
 		else {
 			if (!channel->isModeLimit()) {
+
 				channel->setModeLimit(true);
+				channel->setLimit(atoi(words[2].c_str()));
 			}
 			std::istringstream iss(words[2]);
 			size_t limit;
