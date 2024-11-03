@@ -253,7 +253,7 @@ void Server::handleMode(int socket, const std::string& params) {
 		}
 	}
 	else if (words[1] == "+l") {
-		if (words.size() != 4) {
+		if (words.size() != 3) {
 			std::cerr << "Erreur: le mode +l nécessite 3 paramètres (channel mode nbLimite)" << std::endl;
 		}
 		else {
