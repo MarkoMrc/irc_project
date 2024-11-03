@@ -502,12 +502,15 @@ void Server::closing_sockets()
 	close(server_socket_fd);
 	close(epoll_fd);
 	std::vector<Client*>::iterator it;
+	size_t i = 0;
 	for (it = clients.begin(); it != clients.end(); ++it) {
-		close((*it)->getFd());
-		//if ((*it)->estNouveau())
-			//delete(*it);
+		if (i % 2 == 0) {
+			close((*it)->getFd());
+			delete (*it);
+		}
+		i++;
 	}
-	clients.clear();
+
 }
 
 std::vector<Client*>& Server::getClients(){
