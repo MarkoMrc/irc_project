@@ -7,6 +7,7 @@ Channel::Channel()
 	this->limit = 0;
 	this->name = "";
 	this->topic_n = "";
+	this->modePasswordProtected = false;
 }
 
 Channel::~Channel(){}
@@ -42,7 +43,7 @@ std::string Channel::getTopic_N(){
 	return this->topic_n;
 }
 
-std::string Channel::getPassword(){
+std::string Channel::getPassword() const {
 	return this->password;
 }
 

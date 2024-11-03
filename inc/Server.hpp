@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rshay <rshay@student.42.fr>                +#+  +:+       +#+        */
+/*   By: elias <elias@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/02 09:14:39 by mmaric            #+#    #+#             */
-/*   Updated: 2024/10/21 16:58:33 by rshay            ###   ########.fr       */
+/*   Updated: 2024/10/29 17:10:31 by elias            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,7 @@ private:
 	int port;
 	std::string password;
 	std::vector<Client> clients;
-	std::vector<Channel> channels;
+	std::vector<Channel*> channels;
 	int server_socket_fd;
 	int epoll_fd;
 	void handleCapLs(int socket);
@@ -54,12 +54,16 @@ private:
 	void handleUser(int socket, const std::string& params);
 	void handleOper(int socket, const std::string& params);
 	void handleMode(int socket, const std::string& params);
-	void handleQuit(int socket);
+	void handleQuit(int socket, const std::string& params);
 	void handleJoin(int socket, const std::string& params);
 	void handlePart(int socket, const std::string& params);
 	void handleTopic(int socket, const std::string& params);
 	void handleKick(int socket, const std::string& params);
 	void handlePrivmsg(int socket, const std::string& params);
+	// std::vector<std::string> split(const std::string& str, char delimiter);
+	std::vector<std::string> parsJoin(const std::string& params);
+	bool checkNick(const std::string& params);
+
 
 public:
 	Server(/* args */);
@@ -73,12 +77,13 @@ public:
 	Client *getClient(int fd);
 	Channel *getChannel(std::string name);
 	Client *getClient(const std::string& nickname);
+	std::vector<Client> getClients();
 
 	void setFd(int fd_socket);
 	void setPort(int port);
 	void setPassword(std::string password);
 	void addClient(Client new_client);
-	void addChannel(Channel new_channel);
+	void addChannel(Channel* new_channel);
 
 	void serv_init(int port, std::string password);
 
