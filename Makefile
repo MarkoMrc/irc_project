@@ -10,7 +10,7 @@ NAME = ircserv
 CC = c++
 CFLAGS = -g3 -Wall -Wextra -Werror -std=c++98
 
-FILES = srcs/main srcs/Channel srcs/Client srcs/Server srcs/cmd
+FILES = srcs/main srcs/Channel srcs/Client srcs/Server srcs/cmd srcs/signal
 OBJDIR = obj
 
 SRC = $(FILES:=.cpp)

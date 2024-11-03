@@ -1,5 +1,7 @@
 #include "../inc/Server.hpp"
 
+Server *Server::server = NULL;
+
 Server::Server(/* args */){
 	this->server_socket_fd = -1;
 	setFirstConnexion(true);
@@ -8,6 +10,7 @@ Server::Server(/* args */){
 
 Server::~Server(){
 	//ajouter methode nettoyage Channel
+	std::cout << "destructor called" << std::endl;
 }
 
 Server::Server(Server const &src){
@@ -65,6 +68,13 @@ Channel *Server::getChannel(std::string name){
 			return this->channels[i];
 	}
 	return NULL;
+}
+
+Server *Server::getServer() {
+	if (Server::server == NULL) {
+		Server::server = new Server();
+	}
+	return Server::server;
 }
 
 void Server::setFd(int fd_socket){
@@ -174,6 +184,7 @@ void Server::acceptClient() {
 	// Creer un nouvel objet Client avec le socket
 	Client* new_client;
 	new_client = new Client();
+	new_client->setNouveau(true);
 	new_client->setFd(client_socket);  // Setter pour definir le socket du client
 	new_client->setPswdEnterd(false);
 	// Ajouter le client a la liste des clients du serveur
@@ -434,11 +445,16 @@ void Server::handleConnection(int socket) {
 
 void Server::closing_sockets()
 {
+	std::cout << "closing sockets" << std::endl;
 	close(server_socket_fd);
+	close(epoll_fd);
 	std::vector<Client*>::iterator it;
-	for (it = clients.begin(); it != clients.end(); it++) {
+	for (it = clients.begin(); it != clients.end(); ++it) {
 		close((*it)->getFd());
+		//if ((*it)->estNouveau())
+			//delete(*it);
 	}
+	clients.clear();
 }
 
 std::vector<Client*>& Server::getClients(){
@@ -450,9 +466,10 @@ void Server::removeClient(Client* client) {
         std::cerr << "Erreur: tentative de suppression d'un client nul." << std::endl;
         return;
     }
-
+	int i = 0;
     // Cherchez le client dans la liste
     for (std::vector<Client*>::iterator it = clients.begin(); it != clients.end(); ++it) {
+		i++;
         if (*it == client) {
             // Fermer le socket du client
             close(client->getFd());

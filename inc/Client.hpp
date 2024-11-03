@@ -33,6 +33,7 @@ private:
 	bool registered;
 	bool logged_in;
 	bool pswd_entered;
+	bool nouveau;
 
 public:
 	Client();
@@ -54,6 +55,7 @@ public:
 	std::string getHostname();
 	std::string getTmpNick();
 	std::string getTmpUser();
+	bool estNouveau();
 
 	/*##SETTERS##
 	#nickname, fd, ip
@@ -69,6 +71,7 @@ public:
 	void setFd(int fd);
 	void setIp_add(std::string ip_add);
 	void setBuff(std::string buff);
+	void setNouveau(bool b);
 	/*#METHODS*/
 	 // Nouvelle methode pour definir si le client est authentifie
 	void setLogged(bool status);

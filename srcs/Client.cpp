@@ -10,6 +10,7 @@ Client::Client()
 	this->registered = false;
 	// this->buff = "";
 	this->isOperator = false;
+	this->nouveau = false;
 }
 
 // Client::Client(std::string username, std::string nickname, int fd) : username(username), nickname(nickname), fd(fd) {}
@@ -73,6 +74,10 @@ std::string Client::getTmpUser() {
 	return this->tmp_user;
 }
 
+bool Client::estNouveau() {
+	return this->nouveau;
+}
+
 void Client::setUsername(const std::string& username){
 	this->username = username;
 }
@@ -126,6 +131,9 @@ void Client::setPswdEnterd(bool status) {
 	this->pswd_entered = status;
 }
 
+void Client::setNouveau(bool b) {
+	this->nouveau = b;
+}
 
 bool Client::isLogged() const {
 	return this->logged_in;
