@@ -2,6 +2,7 @@
 
 Server::Server(/* args */){
 	this->server_socket_fd = -1;
+	setFirstConnexion(true);
 }
 
 Server::~Server(){
@@ -28,6 +29,10 @@ int Server::getFd(){
 
 int Server::getPort(){
 	return this->port;
+}
+
+bool Server::getFirstConnexion() {
+	return this->firstConnexion;
 }
 
 std::string Server::getPassword(){
@@ -67,6 +72,10 @@ void Server::setFd(int fd_socket){
 
 void Server::setPort(int port){
 	this->port = port;
+}
+
+void Server::setFirstConnexion(bool fc) {
+	this->firstConnexion = fc;
 }
 
 void Server::setPassword(std::string password){
@@ -297,9 +306,8 @@ void Server::run() {
 }
 
 void Server::handleConnection(int socket) {
-	bool fc = true;
-	bool fcn = true;
-	bool fcu = true;
+	//bool fcn = true;
+	//bool fcu = true;
 	Client *client = getClient(socket);
 	char buffer[1024] = {0};
 	int valread = recv(socket, buffer, sizeof(buffer), 0);
@@ -364,21 +372,19 @@ void Server::handleConnection(int socket) {
 				}
 			} else if (command == "PASS") {
 				if (paramList.size() == 1) {
-					fc = fcn && fcu;
+					//fc = fcn && fcu;
 					std::cout << "nick = " << client->getTmpNick() << std::endl;
-					handlePass(socket, paramList[0], fc, client->getTmpNick(), client->getTmpUser());
+					handlePass(socket, paramList[0], getFirstConnexion(), client->getTmpNick(), client->getTmpUser());
 					pass = paramList[0];
-					fc = false;
+					setFirstConnexion(false);
 				} else {
 					std::cerr << "Erreur: PASS necessite 1 param" << std::endl;
 				}
 			} else if (command == "NICK") {
 				std::cout << "commande NICK" << std::endl;
 				if (paramList.size() == 1) {
-					if (fcn) {
-
+					if (getFirstConnexion()) {
 						client->setTmpNick(paramList[0]);
-						fcn = false;
 						const char *msg = "Veuillez entrer le mot de passe (PASS mdp) \r\n";
 						send(socket, msg, strlen(msg), 0);
 					}
@@ -388,9 +394,8 @@ void Server::handleConnection(int socket) {
 					std::cerr << "Erreur: NICK necessite 1 param" << std::endl;
 				}
 			} else if (command == "USER") {
-				if (fcu) {
+				if (getFirstConnexion()) {
 					client->setTmpUser(params);
-					fcu = false;
 				}
 				else
 					handleUser(socket, params);
