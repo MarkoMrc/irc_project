@@ -3,6 +3,7 @@
 Server::Server(/* args */){
 	this->server_socket_fd = -1;
 	setFirstConnexion(true);
+	
 }
 
 Server::~Server(){
