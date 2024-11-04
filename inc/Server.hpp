@@ -34,6 +34,7 @@
 #include "Client.hpp"
 #include <map>
 #include <algorithm>
+// #include "Signal.hpp"
 
 #define MAX_EVENTS 10
 
@@ -47,6 +48,7 @@ private:
 	std::string password;
 	std::vector<Client*> clients;
 	std::vector<Channel*> channels;
+	static Server *server;
 	int server_socket_fd;
 	int epoll_fd;
 	bool firstConnexion;
@@ -151,6 +153,7 @@ public:
 	Channel *getChannel(std::string name);
 	Client *getClient(const std::string& nickname);
 	std::vector<Client*>& getClients();
+	static Server *getServer();
 
 	void setFd(int fd_socket);
 	void setPort(int port);
@@ -197,6 +200,10 @@ public:
 	// methode pour fermer tous les fds
 	void closing_sockets();
 	void removeClient(Client* client);
+	void signal_handler(int signal);
+	void catch_signal();
+
+	void closeDescriptors();
 
 	
 };

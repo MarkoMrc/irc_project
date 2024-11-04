@@ -1,5 +1,7 @@
 #include "../inc/Server.hpp"
 
+Server *Server::server = NULL;
+
 Server::Server(/* args */){
 	this->server_socket_fd = -1;
 	setFirstConnexion(true);
@@ -8,7 +10,14 @@ Server::Server(/* args */){
 
 Server::~Server(){
 	//ajouter methode nettoyage Channel
+	// if (this->epoll_fd >= 0) {
+    // close(this->epoll_fd);
+	// }
+	// if (this->server_socket_fd >= 0) {
+    // close(this->server_socket_fd);
+	// }
 }
+
 
 Server::Server(Server const &src){
 	*this = src;
@@ -38,6 +47,13 @@ bool Server::getFirstConnexion() {
 
 std::string Server::getPassword(){
 	return this->password;
+}
+
+Server *Server::getServer() {
+	if (Server::server == NULL) {
+		Server::server = new Server();
+	}
+	return Server::server;
 }
 
 Client* Server::getClient(int fd) {
@@ -137,50 +153,6 @@ bool Server::isNewClient(int client_socket) const {
 	return true; // Le client est nouveau
 }
 
-// void Server::acceptClient() {
-// 	struct sockaddr_in client_addr;
-// 	socklen_t client_addr_len = sizeof(client_addr);
-// 	int client_socket = accept(server_socket_fd, (struct sockaddr *)&client_addr, &client_addr_len);
-// 	if (client_socket < 0) {
-// 		std::cerr << "Erreur lors de accept()" << std::endl;
-// 		return;
-// 	}
-// 	std::cout << "Nouvelle connexion acceptee, socket client : " << client_socket << std::endl;
-
-// 	// Vérifie si le client est nouveau
-//	 if (!isNewClient(client_socket)) {
-//		 std::cout << "Client déjà existant avec socket : " << client_socket << std::endl;
-//		 // close(client_socket);  // Fermer la connexion car le client existe déjà
-//		 // return;
-// 		setFirstConnexion(false);
-//	 }
-// 	else {
-// 		setFirstConnexion(true);
-// 	}
-
-// 	// Rendre le socket client non bloquant
-// 	setSocketBlockingMode(client_socket);
-
-// 	// rajout du fd socket client a epoll pour surveiller les evenements in
-// 	struct epoll_event ev;
-// 	memset(&ev, 0, sizeof(ev));
-// 	ev.events = EPOLLIN;
-// 	ev.data.fd = client_socket;
-// 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_socket, &ev) == -1) {
-// 		perror("Erreur lors de epoll_ctl: client_socket");
-// 		exit(EXIT_FAILURE);
-// 	}
-
-// 	// Creer un nouvel objet Client avec le socket
-// 	Client* new_client;
-// 	new_client = new Client();
-// 	new_client->setFd(client_socket);  // Setter pour definir le socket du client
-// 	new_client->setPswdEnterd(false);
-// 	// Ajouter le client a la liste des clients du serveur
-// 	addClient(new_client);
-// 	clients.push_back(new_client);
-// }
-
 void Server::acceptClient() {
 	int client_socket = createClientSocket();
 	if (client_socket < 0) return;
@@ -242,70 +214,6 @@ void Server::setSocketBlockingMode(int socket_fd) {
 	}
 }
 
-// void Server::serv_init(int port, std::string password) {
-// 	std::cout << "INIT" << std::endl;
-// 	this->password = password;
-// 	this->port = port;
-// 	int opt = 1;
-
-// 	// Creation du socket
-// 	server_socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-// 	if (server_socket_fd == -1) {
-// 		std::cerr << "Erreur lors de la creation du socket" << std::endl;
-// 		exit(EXIT_FAILURE);
-// 	}
-
-// 	// Configurer le socket
-// 	if (setsockopt(server_socket_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
-// 		perror("echec de setsockopt");
-// 		exit(EXIT_FAILURE);
-// 	}
-
-// 	// Configuration de l'adresse du serveur
-// 	struct sockaddr_in server_addr;
-// 	memset(&server_addr, 0, sizeof(server_addr)); // Initialiser la structure a zero
-// 	server_addr.sin_family = AF_INET;
-// 	server_addr.sin_addr.s_addr = INADDR_ANY; // Accepter les connexions sur toutes les interfaces
-// 	server_addr.sin_port = htons(port); // Convertir le port en format reseau
-
-// 	// Lier le socket a l'adresse
-// 	if (bind(server_socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-// 		std::cerr << "Erreur lors de la liaison du socket" << std::endl;
-// 		close(server_socket_fd);
-// 		exit(EXIT_FAILURE);
-// 	}
-
-// 	// ecoute des connexions entrantes
-// 	if (listen(server_socket_fd, 10) < 0) {
-// 		std::cerr << "Erreur lors de l'ecoute des connexions" << std::endl;
-// 		close(server_socket_fd);
-// 		exit(EXIT_FAILURE);
-// 	}
-
-// 	// Rendre le socket serveur non bloquant
-// 	setSocketBlockingMode(server_socket_fd);
-
-// 	// Initialisation de epoll
-// 	epoll_fd = epoll_create1(0);
-// 	if (epoll_fd == -1) {
-// 		perror("Erreur de epoll_create");
-// 		exit(EXIT_FAILURE);
-// 	}
-
-// 	// Ajouter le socket serveur a epoll pour surveiller les evenements d'entree
-// 	struct epoll_event ev;
-// 	memset(&ev, 0, sizeof(ev));
-// 	ev.events = EPOLLIN;
-// 	ev.data.fd = server_socket_fd;
-// 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, server_socket_fd, &ev) == -1) {
-// 		perror("Erreur lors de epoll_ctl: server_socket_fd");
-// 		exit(EXIT_FAILURE);
-// 	}
-
-// 	std::cout << "Serveur IRC demarre. En attente de connexions..." << std::endl;
-// }
-
-
 void Server::serv_init(int port, std::string password) {
 	std::cout << "INIT" << std::endl;
 	this->password = password;
@@ -326,6 +234,7 @@ void Server::createSocket() {
 		std::cerr << "Erreur lors de la création du socket" << std::endl;
 		exit(EXIT_FAILURE);
 	}
+	this->server_socket_fd = server_socket_fd;
 }
 
 void Server::configureSocket() {
@@ -364,7 +273,7 @@ void Server::initializeEpoll() {
 		perror("Erreur de epoll_create");
 		exit(EXIT_FAILURE);
 	}
-
+	this->epoll_fd = epoll_fd;
 	struct epoll_event ev;
 	memset(&ev, 0, sizeof(ev));
 	ev.events = EPOLLIN;
@@ -401,176 +310,21 @@ void Server::run() {
 	}
 }
 
-// void Server::handleConnection(int socket) {
-// 	Client *client = getClient(socket);
-// 	if (!client) {
-// 		std::cerr << "Erreur: client non trouvé pour le socket " << socket << std::endl;
-// 		return; // On ne continue pas si le client n'existe pas
-// 	}
-// 	char buffer[1024] = {0};
-// 	int valread = recv(socket, buffer, sizeof(buffer), 0);
-
-// 	if (valread > 0) {
-// 		std::string pass;
-
-// 		// Separer les commandes basees sur '\r\n'
-// 		std::vector<std::string> commands;
-// 		size_t crlf_pos, lf_pos;
-// 		static std::map<int, std::string> partial_data;
-// 		partial_data[socket] += std::string(buffer, valread);
-// 		std::string& received_data = partial_data[socket];
-// 		std::cout << "===received data===" << std::endl << received_data << "===" << std::endl;
-
-// 	// Boucle pour traiter les commandes complètes
-// 	while (true) {
-// 		crlf_pos = received_data.find("\r\n");
-// 		lf_pos = received_data.find("\n");
-
-// 		if (crlf_pos == std::string::npos && lf_pos == std::string::npos) {
-// 			break; // Aucune commande complète, rester dans le buffer
-// 			}
-
-// 		// Déterminer la position de la terminaison de ligne
-// 		size_t end_pos;
-// 		if (crlf_pos != std::string::npos && (lf_pos == std::string::npos || crlf_pos < lf_pos)) {
-// 			end_pos = crlf_pos;
-// 		} else {
-// 			end_pos = lf_pos;
-// 		}
-
-// 		// Extraire la commande complète
-// 		commands.push_back(received_data.substr(0, end_pos));
-
-// 		// Supprimer la commande traitée du buffer
-// 		received_data.erase(0, end_pos + (received_data[end_pos] == '\r' ? 2 : 1));
-// 	}
-
-// 		// Gerer chaque commande separement
-// 		for (std::vector<std::string>::iterator it = commands.begin(); it != commands.end(); ++it) {
-// 			std::istringstream iss(*it);
-// 			std::string command;
-// 			std::getline(iss, command, ' '); // Premier token : la commande
-
-// 			// Recup les param apres la commande
-// 			std::string params;
-// 			std::getline(iss, params); //
-
-// 			// Diviser les parametres
-// 			std::istringstream paramStream(params);
-// 			std::vector<std::string> paramList;
-// 			std::string param;
-
-// 			while (paramStream >> param) {
-// 				paramList.push_back(param);
-// 			}
-
-// 			if (command == "CAP") {
-// 				if (!paramList.empty() && paramList[0] == "LS") {
-// 					handleCapLs(socket);
-// 				}
-// 			} else if (command == "PASS") {
-// 				if (paramList.size() == 1) {
-// 					handlePass(socket, paramList[0], getFirstConnexion(), client->getTmpNick(), client->getTmpUser());
-// 					pass = paramList[0];
-// 					setFirstConnexion(false);
-// 				} else {
-// 					std::cerr << "Erreur: PASS necessite 1 param" << std::endl;
-// 				}
-// 			} else if (command == "NICK") {
-// 				std::cout << "commande NICK" << std::endl;
-// 				if (paramList.size() == 1) {
-// 					if (getFirstConnexion()) {
-// 						client->setTmpNick(paramList[0]);
-// 						const char *msg = "Veuillez entrer le mot de passe (PASS mdp) \r\n";
-// 						send(socket, msg, strlen(msg), 0);
-// 					}
-// 					else
-// 						handleNick(socket, paramList[0]);
-// 				} else {
-// 					std::cerr << "Erreur: NICK necessite 1 param" << std::endl;
-// 				}
-// 			} else if (command == "USER") {
-// 				if (getFirstConnexion()) {
-// 					client->setTmpUser(params);
-// 				}
-// 				else
-// 					handleUser(socket, params);
-// 			} else if (command == "MODE" && client->isLogged()) {
-// 				if (paramList.size() < 2) {
-// 					std::cerr << "Erreur: MODE nécessite au moins 2 paramètres" << std::endl;
-// 				} else {
-// 					handleMode(socket, params);
-// 				}
-// 			} else if (command == "QUIT") {
-// 				handleQuit(socket, params);
-// 			} else if (command == "JOIN"  && client->isLogged()) {
-// 				handleJoin(socket, params);
-// 			} else if (command == "TOPIC"  && client->isLogged()) {
-// 				handleTopic(socket, params);
-// 			} else if (command == "KICK"  && client->isLogged()) {
-// 				handleKick(socket, params);
-// 			} else if (command == "PRIVMSG"  && client->isLogged()) {
-// 				handlePrivmsg(socket, params);
-// 			} else if (command == "INVITE"  && client->isLogged()) {
-// 				handleInvite(socket, params);
-// 			} else {
-// 				if (!client->isLogged())
-// 					std::cerr << "Veuillez vous authentifier" << std::endl;
-// 				else 		
-// 					std::cerr << "Commande inconnue: " << command << std::endl;
-// 			}
-// 			Client* client = getClient(socket);
-// 			if (client)
-// 			{
-// 				if (!getClient(socket)->isLogged() && !getClient(socket)->getNickname().empty() && !getClient(socket)->getUsername().empty()) {
-// 					std::string nick = getClient(socket)->getNickname();
-// 					std::string user = getClient(socket)->getUsername();
-// 					authenticateClient(socket, pass, nick, user);
-// 				}
-// 			}
-// 		}
-// 	} else if (valread == 0) {
-// 		// Supprimer le client de tous les canaux auxquels il est connecté
-// 		for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it) {
-// 			Channel* channel = *it;
-// 			if (channel->isClient(*client)) {
-// 				// Notifier les autres clients que ce client a quitté
-// 				std::string quit_message = "a client has quit.\r\n";
-// 				channel->broadcastMessage(quit_message, client);
-
-// 				// Mettre à jour la liste des noms pour tous les clients restants
-// 				std::string names_list = "= " + channel->getName() + " :";
-// 				const std::vector<Client*>& clients = channel->getClients();
-// 				for (std::vector<Client*>::const_iterator remainingIt = clients.begin(); remainingIt != clients.end(); ++remainingIt) {
-// 					names_list += (*remainingIt)->getNickname() + " ";
-// 				}
-// 				names_list += "\r\n";
-// 		}
-// 		(*it)->removeClient(client->getFd());
-// 	}
-
-// 		removeClient(client);
-// 		std::cout << "Client deconnecte, socket: " << socket << std::endl;
-// 		close(socket);
-// 		epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket, NULL);  // delete epoll socket
-// 	} else if (valread < 0) {
-// 		if (errno == EAGAIN || errno == EWOULDBLOCK)
-// 			return ;
-// 		else {
-// 			perror("Erreur de reception sur le socket");
-// 			close(socket);
-// 			return;
-// 		}
-// 	}
-// }
-
 void Server::closing_sockets()
 {
+	std::cout << "closing sockets" << std::endl;
 	close(server_socket_fd);
+	close(epoll_fd);
 	std::vector<Client*>::iterator it;
-	for (it = clients.begin(); it != clients.end(); it++) {
-		close((*it)->getFd());
+	size_t i = 0;
+	for (it = clients.begin(); it != clients.end(); ++it) {
+		if (i % 2 == 0) {
+			close((*it)->getFd());
+			delete (*it);
+		}
+		i++;
 	}
+
 }
 
 std::vector<Client*>& Server::getClients(){

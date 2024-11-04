@@ -102,7 +102,7 @@ void Server::processCommand(int socket, const std::string& command_line, std::st
 		handleUnknownCommand(socket, client, command);
 	}
 	client = getClient(socket);
-	if (client)
+	if (client && command != "QUIT")
 	{
 		if (!getClient(socket)->isLogged() && !getClient(socket)->getNickname().empty() && !getClient(socket)->getUsername().empty()) {
 			std::string nick = getClient(socket)->getNickname();

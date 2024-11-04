@@ -12,12 +12,30 @@
 
 # include "../inc/Server.hpp"
 
-void Server::signal_handler(int signal)
+
+// void Server::closeDescriptors() {
+//     if (epoll_fd != -1) {
+//         close(epoll_fd);
+//     }
+//     if (server_socket_fd != -1) {
+//         close(server_socket_fd);
+//     }
+//     // Fermez d'autres descripteurs si nécessaire
+// }
+
+void signal_handler(int signal)
 {
-    if (signal == SIGINT || signal == SIGTERM)
+    int sig = (int)signal;
+    if (sig == SIGINT || sig == SIGTERM)
     {
         std::cout << "Signal SIGINT reçu. Arrêt du serveur." << std::endl;
         // Fermeture propre des connexions, libération des ressources, etc.
+        Server *server = Server::getServer();
+		// if (server){
+		// 	server->closeDescriptors();
+		// }
+        server->closing_sockets();
+        delete(server);
         exit(0);
     }
     // if (signal == SIGHUP)
@@ -27,7 +45,7 @@ void Server::signal_handler(int signal)
     //  std::cout << "Signal inconnu reçu." << std::endl;
 }
 
-void Server::catch_signal()
+void catch_signal()
 {
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
