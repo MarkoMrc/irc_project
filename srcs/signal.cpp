@@ -26,9 +26,9 @@
 void signal_handler(int signal)
 {
     int sig = (int)signal;
-    if (sig == SIGINT || sig == SIGTERM)
+    if (sig == SIGINT || sig == SIGTERM || sig == SIGTSTP || sig == SIGQUIT)
     {
-        std::cout << "Signal SIGINT reçu. Arrêt du serveur." << std::endl;
+        std::cout << "Signal reçu. Arrêt du serveur." << std::endl;
         // Fermeture propre des connexions, libération des ressources, etc.
         Server *server = Server::getServer();
 		// if (server){
@@ -51,4 +51,6 @@ void catch_signal()
     signal(SIGTERM, signal_handler);
     signal(SIGHUP, signal_handler);
     signal(SIGPIPE, SIG_IGN);
+	signal(SIGQUIT, signal_handler);
+	signal(SIGTSTP, signal_handler);
 }

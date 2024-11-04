@@ -127,7 +127,6 @@ bool Channel::isAdmin(const Client& client) const {
 
 bool Channel::isClient(const Client& client) const {
 	for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-		std::cout << "Testing socket: " << (*it)->getFd() << " against client socket: " << client.getFd() << std::endl;
 		if ((*it)->getFd() == client.getFd()) {
 			return true;
 		}
@@ -138,7 +137,6 @@ bool Channel::isClient(const Client& client) const {
 void Channel::removeClient(int fd) {
 	for (std::vector<Client*>::iterator it = clients.begin(); it != clients.end(); ) {
 		if ((*it)->getFd() == fd) {
-			std::cout << "element supprimer" << std::endl;
 			// delete *it; // Si vous devez libérer la mémoire (si les pointeurs sont alloués dynamiquement)
 			it = clients.erase(it); // Supprime le client et obtient l'itérateur vers le nouvel élément
 		} else {

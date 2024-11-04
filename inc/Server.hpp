@@ -64,11 +64,11 @@ private:
 	void handleKick(int socket, const std::string& params);
 	void handlePrivmsg(int socket, const std::string& params);
 	void handleInvite(int socket, const std::string& params);
-	void handleOperatorMode(Channel* channel, const std::vector<std::string>& words);
-    void handleInviteOnlyMode(Channel* channel, const std::vector<std::string>& words);
-    void handleTopicProtectionMode(Channel* channel, const std::vector<std::string>& words);
-    void handlePasswordMode(Channel* channel, const std::vector<std::string>& words);
-    void handleLimitMode(Channel* channel, const std::vector<std::string>& words);
+	void handleOperatorMode(Channel* channel, const std::vector<std::string>& words, int socket);
+    void handleInviteOnlyMode(Channel* channel, const std::vector<std::string>& words, int socket);
+    void handleTopicProtectionMode(Channel* channel, const std::vector<std::string>& words, int socket);
+    void handlePasswordMode(Channel* channel, const std::vector<std::string>& words, int socket);
+    void handleLimitMode(Channel* channel, const std::vector<std::string>& words, int socket);
 	// std::vector<std::string> split(const std::string& str, char delimiter);
 	std::vector<std::string> parsJoin(const std::string& params);
 	bool checkNick(const std::string& params);
@@ -92,7 +92,7 @@ private:
 	 std::vector<std::string> parseJoinParams(const std::string& params);
     bool isValidChannelName(const std::string& channel_name);
     Channel* getOrCreateChannel(const std::string& channel_name, Client* client, const std::vector<std::string>& args);
-    void checkChannelMembership(Channel* channel, Client* client, const std::string& channel_name);
+    bool checkChannelMembership(Channel* channel, Client* client, const std::string& channel_name, int socket);
     bool validateChannelAccess(Channel* channel, Client* client, const std::vector<std::string>& args, int socket);
     void addClientToChannel(Channel* channel, Client* client, int socket);
     void sendJoinMessages(Channel* channel, Client* client, const std::string& channel_name, int socket);
@@ -108,8 +108,8 @@ private:
 	std::vector<std::string> parseKickParams(const std::string& params);
 	std::string extractKickReason(const std::string& params, const std::vector<std::string>& parsedParams);
 	Client* validateKicker(int socket);
-	Channel* validateChannel(const std::string& channelName, Client* kicker);
-	Client* validateKickee(const std::string& targetNickname, Channel* channel);
+	Channel* validateChannel(const std::string& channelName, Client* kicker, int socket);
+	Client* validateKickee(const std::string& targetNickname, Channel* channel, int socket);
 	void executeKick(Client* kicker, Client* kickee, Channel* channel, const std::string& channelName, const std::string& targetNickname, const std::string& reason);
 
 	//PRIVMSG
@@ -118,10 +118,10 @@ private:
 	std::string parseTarget(const std::string& params);
 	std::string parseMessage(const std::string& params, const std::string& target);
 	bool isChannelMessage(const std::string& target);
-	void handleChannelMessage(Client* client, const std::string& target, const std::string& message);
+	void handleChannelMessage(Client* client, const std::string& target, const std::string& message, int socket);
 	// bool validateChannel(Channel* channel, const std::string& target);
 	void broadcastChannelMessage(Channel* channel, Client* client, const std::string& message);
-	void handleDirectMessage(Client* client, const std::string& target, const std::string& message);
+	void handleDirectMessage(Client* client, const std::string& target, const std::string& message, int socket);
 	bool validateTargetClient(Client* target_client, const std::string& target);
 
 	//INVITE
@@ -130,7 +130,7 @@ private:
 	bool validateParams(const std::vector<std::string>& parsedParams);
 	bool validateInviter(Client* inviter, int socket);
 	bool validateChannel(Channel* channel, const std::string& channelName);
-	bool canInvite(Client* inviter, Channel* channel);
+	bool canInvite(Client* inviter, Channel* channel, int socket);
 	bool validateInvitee(Client* invitee, const std::string& targetNickname);
 	void sendInvite(Client* inviter, Client* invitee, const std::string& channelName);
 	void sendConfirmation(Client* inviter, int socket, const std::string& targetNickname, const std::string& channelName);
@@ -178,7 +178,7 @@ public:
 	//MODE
 	void handleMode(int socket, const std::string& params);
     // std::vector<std::string> parseParams(const std::string& params);
-    void processModeCommand(Channel* channel, Client* client, const std::vector<std::string>& words);
+    void processModeCommand(Channel* channel, Client* client, const std::vector<std::string>& words, int socket);
 
     int createClientSocket();
     bool handleNewClient(int client_socket);

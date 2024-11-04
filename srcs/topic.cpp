@@ -20,6 +20,8 @@ void Server::handleTopic(int socket, const std::string& params) {
 		}
 	} else {
 		std::cerr << "Channel " << channel_name << " not found." << std::endl;
+		const char *msg = "ERR_NOSUCHCHANNEL (403) : Le channel spécifié n'existe pas.\r\n";
+		send(socket, msg, strlen(msg), 0);
 	}
 }
 

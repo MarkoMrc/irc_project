@@ -10,9 +10,9 @@ void Server::handlePrivmsg(int socket, const std::string& params) {
 	std::string message = parseMessage(params, target);
 
 	if (isChannelMessage(target)) {
-		handleChannelMessage(client, target, message);
+		handleChannelMessage(client, target, message, socket);
 	} else {
-		handleDirectMessage(client, target, message);
+		handleDirectMessage(client, target, message, socket);
 	}
 }
 
@@ -39,11 +39,18 @@ bool Server::isChannelMessage(const std::string& target) {
 	return !target.empty() && target[0] == '#';
 }
 
-void Server::handleChannelMessage(Client* client, const std::string& target, const std::string& message) {
+void Server::handleChannelMessage(Client* client, const std::string& target, const std::string& message, int socket) {
 	Channel* channel = getChannel(target);
-	if (!validateChannel(channel, target)) return;
+	if (!validateChannel(channel, target)) 
+	{
+		const char *msg = "ERR_NOSUCHCHANNEL (403) : Le channel spécifié n'existe pas.\r\n";
+		send(socket, msg, strlen(msg), 0);
+		return;
+	}
 	if (!channel->isClient(*client)) {
 		std::cerr << "le client n'appartient pas au channel spécifié" << std::endl;
+		const char *msg = "ERR_NOTONCHANNEL (442) : Vous n'etes pas sur le channel.\r\n";
+		send(socket, msg, strlen(msg), 0);
 		return;
 	}
 
@@ -63,9 +70,14 @@ void Server::broadcastChannelMessage(Channel* channel, Client* client, const std
 	}
 }
 
-void Server::handleDirectMessage(Client* client, const std::string& target, const std::string& message) {
+void Server::handleDirectMessage(Client* client, const std::string& target, const std::string& message, int socket) {
 	Client* target_client = getClient(target);
-	if (!validateTargetClient(target_client, target)) return;
+	if (!validateTargetClient(target_client, target)) 
+	{
+		const char *msg = "ERR_NOSUCHNICK (401) : Le nickname n'existe pas.\r\n";
+		send(socket, msg, strlen(msg), 0);
+		return;
+	}
 
 	std::string formatted_message = ":" + client->getNickname() + " PRIVMSG " + target + " :" + message + "\r\n";
 	send(target_client->getFd(), formatted_message.c_str(), formatted_message.length(), 0);

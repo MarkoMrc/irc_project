@@ -7,6 +7,8 @@ void Server::handleKick(int socket, const std::string& params) {
 	std::vector<std::string> parsedParams = parseKickParams(params);
 	if (parsedParams.size() < 2) {
 		std::cerr << "Erreur : Paramètres insuffisants pour la commande KICK" << std::endl;
+		const char *msg = "ERR_NEEDMOREPARAMS (461) : Pas assez de paramètres fournis pour la commande INVITE\r\n";
+		send(socket, msg, strlen(msg), 0);
 		return;
 	}
 
@@ -17,10 +19,10 @@ void Server::handleKick(int socket, const std::string& params) {
 	Client* kicker = validateKicker(socket);
 	if (!kicker) return;
 
-	Channel* channel = validateChannel(channelName, kicker);
+	Channel* channel = validateChannel(channelName, kicker, socket);
 	if (!channel) return;
 
-	Client* kickee = validateKickee(targetNickname, channel);
+	Client* kickee = validateKickee(targetNickname, channel, socket);
 	if (!kickee) return;
 
 	executeKick(kicker, kickee, channel, channelName, targetNickname, reason);
@@ -52,31 +54,41 @@ Client* Server::validateKicker(int socket) {
 	return kicker;
 }
 
-Channel* Server::validateChannel(const std::string& channelName, Client* kicker) {
+Channel* Server::validateChannel(const std::string& channelName, Client* kicker, int socket) {
 	Channel* channel = getChannel(channelName);
 	if (!channel) {
 		std::cerr << "Erreur : le canal " << channelName << " n'existe pas" << std::endl;
+		const char *msg = "ERR_NOSUCHCHANNEL (403) : Le channel spécifié n'existe pas.\r\n";
+		send(socket, msg, strlen(msg), 0);
 		return NULL;
 	}
 	if (!channel->isClient(*kicker)) {
-		std::cerr << "Erreur : vous n'êtes pas membre du canal " << channelName << std::endl;
+		std::cerr << "Erreur : l'utilisateur n'est pas membre du canal " << channelName << std::endl;
+		const char *msg = "ERR_NOTONCHANNEL (442) : Vous n'etes pas sur le channel.\r\n";
+		send(socket, msg, strlen(msg), 0);
 		return NULL;
 	}
 	if (!channel->isAdmin(*kicker)) {
 		std::cerr << "Erreur : vous n'avez pas la permission d'expulser dans ce canal" << std::endl;
+		const char *msg = "ERR_CHANOPRIVSNEEDED (482) : L'utilisateur tente d'expulser sur un channel sans être opérateur.\r\n";
+		send(socket, msg, strlen(msg), 0);
 		return NULL;
 	}
 	return channel;
 }
 
-Client* Server::validateKickee(const std::string& targetNickname, Channel* channel) {
+Client* Server::validateKickee(const std::string& targetNickname, Channel* channel, int socket) {
 	Client* kickee = getClient(targetNickname);
 	if (!kickee) {
 		std::cerr << "Erreur : le client " << targetNickname << " n'existe pas" << std::endl;
+		const char *msg = "ERR_NOSUCHNICK (401) : Le nickname n'existe pas.\r\n";
+		send(socket, msg, strlen(msg), 0);
 		return NULL;
 	}
 	if (!channel->isClient(*kickee)) {
 		std::cerr << "Erreur : " << targetNickname << " n'est pas dans le canal " << channel->getName() << std::endl;
+		const char *msg = "ERR_NOTONCHANNEL (442) : La cible n'est pas sur le channel.\r\n";
+		send(socket, msg, strlen(msg), 0);
 		return NULL;
 	}
 	return kickee;

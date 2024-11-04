@@ -29,6 +29,8 @@ void Server::handleJoin(int socket, const std::string& params) {
 	std::vector<std::string> args = parseJoinParams(params);
 	if (args.empty()) {
 		std::cerr << "Paramètre vide " << socket << std::endl;
+		const char *msg = "ERR_NEEDMOREPARAMS (461) : Pas assez de paramètres fournis pour la commande INVITE\r\n";
+		send(socket, msg, strlen(msg), 0);
 		return;
 	}
 
@@ -39,12 +41,16 @@ void Server::handleJoin(int socket, const std::string& params) {
 	}
 
 	std::string channel_name = args[0];
-	if (!isValidChannelName(channel_name)) return;
+	if (!isValidChannelName(channel_name)){
+		const char *msg = "ERR_NOSUCHCHANNEL (403) : Le channel spécifié n'existe pas.\r\n";
+		send(socket, msg, strlen(msg), 0);
+		return;
+	}
 
 	Channel* channel = getOrCreateChannel(channel_name, client, args);
 	if (!channel) return;
 
-	checkChannelMembership(channel, client, channel_name);
+	if (checkChannelMembership(channel, client, channel_name, socket)) return;
 	if (!validateChannelAccess(channel, client, args, socket)) return;
 
 	addClientToChannel(channel, client, socket);
@@ -89,14 +95,17 @@ Channel* Server::getOrCreateChannel(const std::string& channel_name, Client* cli
 }
 
 // Fonction pour vérifier si le client est déjà dans le canal
-void Server::checkChannelMembership(Channel* channel, Client* client, const std::string& channel_name) {
+bool Server::checkChannelMembership(Channel* channel, Client* client, const std::string& channel_name, int socket) {
 	const std::vector<Client*>& clients = channel->getClients();
 	for (std::vector<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
 		if ((*it)->getFd() == client->getFd()) {
+			std::string error_message = "ERR_USERONCHANNEL (443) : client is already on channel\r\n";
+			send(socket, error_message.c_str(), error_message.length(), 0);
 			std::cerr << client->getNickname() << " est déjà dans le canal " << channel_name << std::endl;
-			return;
+			return true;
 		}
 	}
+	return false;
 }
 
 
@@ -104,19 +113,23 @@ void Server::checkChannelMembership(Channel* channel, Client* client, const std:
 bool Server::validateChannelAccess(Channel* channel, Client* client, const std::vector<std::string>& args, int socket) {
 	if (channel->isModeInviteOnly() && !channel->isInvited(client)) {
 		std::cerr << client->getNickname() << " n'est pas invité dans le canal " << channel->getName() << std::endl;
-		std::string error_message = "Vous devez être invité pour rejoindre ce canal.\r\n";
+		std::string error_message = "ERR_INVITEONLYCHAN (473) : Le channel est en mode invite-only et l'utilisateur n'a pas été invité.\r\n";
 		send(socket, error_message.c_str(), error_message.length(), 0);
+		std::string error_message1 = "Vous devez être invité pour rejoindre ce canal.\r\n";
+		send(socket, error_message1.c_str(), error_message.length(), 0);
 		return false;
 	}
 
 	if (channel->isModePasswordProtected() && (args.size() < 2 || args[1] != channel->getPassword())) {
 		std::cerr << "Mot de passe incorrect pour le canal " << channel->getName() << std::endl;
+		std::string error_message = "ERR_BADCHANNELKEY (475) : Mauvais mot de passe pour rejoindre un channel privé/protégé.\r\n";
+		send(socket, error_message.c_str(), error_message.length(), 0);
 		return false;
 	}
 
 	if (channel->isModeLimit() && channel->getClients().size() >= channel->getLimit()) {
 		std::cerr << "Le canal " << channel->getName() << " est plein, impossible de rejoindre." << std::endl;
-		std::string error_message = "Le canal est plein, vous ne pouvez pas rejoindre.\r\n";
+		std::string error_message = "ERR_CHANNELISFULL (471) : Le channel est plein, impossible de joindre.\r\n";
 		send(socket, error_message.c_str(), error_message.length(), 0);
 		return false;
 	}

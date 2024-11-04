@@ -33,15 +33,20 @@ void Server::handlePass(int socket, const std::string& params, bool firstConnexi
 		std::string client_password = params.substr(0, params.find(' '));
 		std::cout << "===Commande PASS reçue avec params: " << params << "===" << std::endl;
 		std::string mdp = getPassword();
+		Client *client = getClient(socket);
+		if (!client){
+			std::cout << "erreur !client : "<< getClient(socket) << std::endl;
+			return ;
+		}
+		if (client->isPswdEnterd())
+		{
+			const char *msg1 ="ERR_ALREADYREGISTRED (462) : Tentative de définir un mot de passe après que l'utilisateur soit déjà enregistré sur le serveur.\r\n";
+			send(socket, msg1, strlen(msg1), 0);
+		}
 		if (client_password == mdp) {
 			std::cout << "Mot de passe correct." << std::endl;
-			Client *client = getClient(socket);
-			if (!client){
-				std::cout << "erreur !client : "<< getClient(socket) << std::endl;
-				return ;
-			}
 			client->setPswdEnterd(true);
-			const char *msg = "Mot de passe correct. Connexion acceptee.\r\n";
+			const char *msg = "Mot de passe correct.\r\n";
 			send(socket, msg, strlen(msg), 0);
 			if (firstConnexion)
 			{
@@ -57,7 +62,7 @@ void Server::handlePass(int socket, const std::string& params, bool firstConnexi
 		}
 		else {
 			std::cout << "Mot de passe incorrect." << std::endl;
-			const char *msg = "Mot de passe incorrect. Connexion refusee. Veuillez reessayer.\r\n";
+			const char *msg = "ERR_PASSWDMISMATCH (464) : Mot de passe incorrect fourni.\r\n";
 			send(socket, msg, strlen(msg), 0);
 		}
 	}
@@ -80,11 +85,15 @@ void Server::handleNick(int socket, const std::string& params) {
 	}
 	if (params.empty()) {
 		std::cout << "message d'erreur" << std::endl;
+		const char *msg = "ERR_NONICKNAMEGIVEN (431) : Aucun pseudonyme fourni dans la commande NICK.\r\n";
+		send(socket, msg, strlen(msg), 0);
 		return ;
 	}
 	if (!checkNick(params))
 	{
-		std::cout << "le nickname doit etre compose uniquement de lettre chiffre ou tiret" << std::endl; // mettre les bon messages d'erreur
+		std::cout << "le nickname doit etre compose uniquement de lettre chiffre ou tiret" << std::endl;
+		const char *msg = "ERR_ERRONEUSNICKNAME (432) : Le pseudonyme fourni est invalide\r\n";
+		send(socket, msg, strlen(msg), 0);
 		return;
 	}
 	std::vector<Client*> clients = getClients();
@@ -93,6 +102,8 @@ void Server::handleNick(int socket, const std::string& params) {
 	for (std::vector<Client*>::iterator it = clients.begin(); it != clients.end(); ++it) {
 		if ((*it)->getNickname() == params) {
 			std::cout << "Erreur : le nickname '" << params << "' existe déjà." << std::endl;
+			const char *msg = "ERR_NICKNAMEINUSE (433) : Le pseudonyme est déjà utilisé par un autre utilisateur.\r\n";
+			send(socket, msg, strlen(msg), 0);
 			return;
 		}
 	}
@@ -114,6 +125,10 @@ void Server::handleUser(int socket, const std::string& params) {
 	std::getline(iss, realname, ' ');  // username est precede de ':'
 	Client *client = getClient(socket);
 	if (client) {
+		if (username.empty()){
+			const char *msg = "ERR_NEEDMOREPARAMS (461) : Pas assez de paramètres pour la commande USER.\r\n";
+			send(socket, msg, strlen(msg), 0);
+		}
 		if (!username.empty()) {
 			client->setUsername(username);
 			std::cout << "Utilisateur defini username : " << client->getUsername() << std::endl;

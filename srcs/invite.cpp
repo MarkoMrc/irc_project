@@ -5,7 +5,11 @@ void Server::handleInvite(int socket, const std::string& params) {
 	std::cout << "===Commande INVITE reçue avec params: " << params << "===" << std::endl;
 
 	std::vector<std::string> parsedParams = parseParams(params);
-	if (!validateParams(parsedParams)) return;
+	if (!validateParams(parsedParams)){
+		const char *msg = "ERR_NEEDMOREPARAMS (461) : Pas assez de paramètres fournis pour la commande INVITE\r\n";
+		send(socket, msg, strlen(msg), 0);
+		return;
+	}
 
 	std::string targetNickname = parsedParams[0];
 	std::string channelName = parsedParams[1];
@@ -14,15 +18,27 @@ void Server::handleInvite(int socket, const std::string& params) {
 	if (!validateInviter(inviter, socket)) return;
 
 	Channel* channel = getChannel(channelName);
-	if (!validateChannel(channel, channelName)) return;
+	if (!validateChannel(channel, channelName)){
+		const char *msg = "ERR_NOSUCHCHANNEL (403) : Le channel spécifié n'existe pas\r\n";
+		send(socket, msg, strlen(msg), 0);
+		return;
+	}
+	if (!canInvite(inviter, channel, socket))
+		return;
 
-	if (!canInvite(inviter, channel)) return;
 
 	Client* invitee = getClient(targetNickname);
-	if (!validateInvitee(invitee, targetNickname)) return;
+	if (!validateInvitee(invitee, targetNickname))
+	{
+		const char *msg = "ERR_NOSUCHNICK (401) : Le nickname n'existe pas.\r\n";
+		send(socket, msg, strlen(msg), 0);
+		return;
+	}
 
 	if (channel->isClient(*invitee)) {
 		std::cerr << "Erreur : " << targetNickname << " est déjà dans le canal " << channelName << std::endl;
+		const char *msg = "ERR_USERONCHANNEL (443) : The target is already on channel\r\n";
+		send(socket, msg, strlen(msg), 0);
 		return;
 	}
 
@@ -66,13 +82,17 @@ bool Server::validateChannel(Channel* channel, const std::string& channelName) {
 	return true;
 }
 
-bool Server::canInvite(Client* inviter, Channel* channel) {
+bool Server::canInvite(Client* inviter, Channel* channel, int socket) {
 	if (!channel->isClient(*inviter)) {
-		std::cerr << "Erreur : vous n'êtes pas membre du canal " << channel->getName() << std::endl;
+		std::cerr << "Erreur : Client n'est pas membre du canal " << channel->getName() << std::endl;
+		const char *msg = "ERR_NOTONCHANNEL (442) : Vous n'etes pas sur le channel.\r\n";
+		send(socket, msg, strlen(msg), 0);
 		return false;
 	}
 	if (!channel->isAdmin(*inviter)) {
-		std::cerr << "Erreur : vous n'avez pas la permission d'inviter dans ce canal" << std::endl;
+		std::cerr << "Erreur : Client n'a pas la permission d'inviter dans ce canal" << std::endl;
+		const char *msg = "ERR_CHANOPRIVSNEEDED (482) : L'utilisateur tente d'inviter sur un channel sans être opérateur.\r\n";
+		send(socket, msg, strlen(msg), 0);
 		return false;
 	}
 	return true;

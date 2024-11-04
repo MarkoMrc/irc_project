@@ -119,6 +119,8 @@ void Server::handlePassCommand(int socket, const std::vector<std::string>& param
 		setFirstConnexion(false);
 	} else {
 		std::cerr << "Erreur: PASS necessite 1 param" << std::endl;
+		const char *msg = "ERR_NEEDMOREPARAMS (461) : Pas assez de paramètres fournis pour la commande PASS.\r\n";
+		send(socket, msg, strlen(msg), 0);
 	}
 }
 
