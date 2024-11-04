@@ -177,11 +177,12 @@ int Server::createClientSocket() {
 }
 
 bool Server::handleNewClient(int client_socket) {
-	if (!isNewClient(client_socket)) {
-		std::cout << "Client déjà existant avec socket : " << client_socket << std::endl;
-		setFirstConnexion(false);
-		return false;  // Client déjà existant
-	}
+	// if (!isNewClient(client_socket)) {
+	// 	std::cout << "Client déjà existant avec socket : " << client_socket << std::endl;
+	// 	setFirstConnexion(false);
+	// 	return false;  // Client déjà existant
+	// }
+	(void) client_socket;
 	setFirstConnexion(true);
 	return true;  // Nouveau client
 }
@@ -337,74 +338,24 @@ void Server::removeClient(Client* client) {
 		return;
 	}
 
+	size_t i = 0;
 	// Cherchez le client dans la liste
 	for (std::vector<Client*>::iterator it = clients.begin(); it != clients.end(); ++it) {
-		if (*it == client) {
+		if (i % 2 + 1 == 0) {
+			if (*it == client) {
 			// Fermer le socket du client
-			close(client->getFd());
+				close(client->getFd());
 
-			// Supprimer le client de la liste
-			clients.erase(it);
-			delete client; // Libération de la mémoire
-			std::cout << "Client supprimé de la liste." << std::endl;
-			return;
-		}
+				// Supprimer le client de la liste
+				clients.erase(it);
+				delete client; // Libération de la mémoire
+				std::cout << "Client supprimé de la liste." << std::endl;
+				return;
+			}
+
+			std::cerr << "Erreur: client non trouvé dans la liste." << std::endl;
+		} 
+		i++;
 	}
-
-	std::cerr << "Erreur: client non trouvé dans la liste." << std::endl;
 }
 
-
-
-
-
-
-
-
-
-// bool Server::askPassword(int socket)
-// {
-// 	const char *ask_password = "Veuillez entrer le mot de passe:\n";
-// 	send(socket, ask_password, strlen(ask_password), 0);
-
-// 	// Lire la reponse du client
-// 	char buffer[1024] = {0};
-// 	int valread = recv(socket, buffer, 1024, 0);
-
-// 	std::cout << "test :" << buffer << std::endl;
-
-// 	// Gerer le cas ou la reception echoue ou la connexion est fermee
-// 	if (valread <= 0)
-// 	{
-// 		std::cerr << "Erreur lors de la reception ou connexion fermee." << std::endl;
-// 		return false;
-// 	}
-// 	if (valread > 0)
-// 	{
-// 		std::cout << "buffer :" << buffer << std::endl;
-// 	}
-
-// 	// Supprimer le saut de ligne s'il y en a
-// 	if (buffer[valread - 1] == '\n' || buffer[valread - 1] == '\r' )
-// 		buffer[valread - 1] = '\0';  // Pour enlever le '\n' ajoute par le client
-
-// 	// Comparer le mot de passe fourni avec celui du serveur
-// 	if (strcmp(password.c_str(), buffer) == 0)
-// 	{
-// 		std::cout << "test :" << buffer << std::endl;
-// 		std::cout << "Mot de passe correct. Connexion autorisee." << std::endl;
-// 		const char *welcome_message = "Bienvenue sur ce serveur IRC!\n";
-// 		send(socket, welcome_message, strlen(welcome_message), 0);
-// 		return true;
-// 	}
-// 	else
-// 	{
-// 		const char *ask_password = "Veuillez entrer le mot de passe:\n";
-// 		send(socket, ask_password, strlen(ask_password), 0);
-// 		int valread = recv(socket, buffer, 1024, 0);
-// 		std::cout << "test :" << buffer << std::endl;
-// 		std::cout << "Mot de passe incorrect. Connexion refusee." << std::endl;
-// 		(void) valread;
-// 		return false;
-// 	}
-// }
