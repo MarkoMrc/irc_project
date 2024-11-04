@@ -325,6 +325,10 @@ void Server::closing_sockets()
 		}
 		i++;
 	}
+	std::vector<Channel *>::iterator itc;
+	for (itc = channels.begin(); itc != channels.end(); itc++) {
+		delete(*itc);
+	}
 
 }
 
