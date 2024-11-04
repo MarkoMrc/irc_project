@@ -24,7 +24,7 @@ std::vector<std::string> Server::parsJoin(const std::string& params)
 }
 
 void Server::handleJoin(int socket, const std::string& params) {
-	std::cout << "Commande JOIN reçue avec params: " << params << std::endl;
+	std::cout << "===Commande JOIN reçue avec params: " << params << "===" << std::endl;
 
 	std::vector<std::string> args = parseJoinParams(params);
 	if (args.empty()) {

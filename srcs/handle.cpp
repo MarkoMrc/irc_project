@@ -25,7 +25,7 @@ void Server::processReceivedData(int socket, Client* client, char* buffer, int v
 
 	partial_data[socket] += std::string(buffer, valread);
 	std::string& received_data = partial_data[socket];
-	std::cout << "===received data===" << std::endl << received_data << "===" << std::endl;
+	// std::cout << "===received data===" << std::endl << received_data << "===" << std::endl;
 
 	extractCommands(received_data, commands);
 
@@ -76,8 +76,8 @@ void Server::processCommand(int socket, const std::string& command_line, std::st
 		paramList.push_back(param);
 	}
 
-	if (command == "CAP" && !paramList.empty() && paramList[0] == "LS") {
-		handleCapLs(socket);
+	if (command == "CAP" && !paramList.empty() && (paramList[0] == "LS" || paramList[0] == "END")) {
+		handleCapLs(socket, paramList[0]);
 	} else if (command == "PASS") {
 		handlePassCommand(socket, paramList, client, pass);
 	} else if (command == "NICK") {
@@ -123,13 +123,13 @@ void Server::handlePassCommand(int socket, const std::vector<std::string>& param
 }
 
 void Server::handleNickCommand(int socket, const std::vector<std::string>& paramList, Client* client) {
-	std::cout << "commande NICK" << std::endl;
 	if (paramList.size() == 1) {
 		if (getFirstConnexion()) {
 			client->setTmpNick(paramList[0]);
 			const char *msg = "Veuillez entrer le mot de passe (PASS mdp) \r\n";
 			send(socket, msg, strlen(msg), 0);
 		} else {
+			std::cout << "===Commande NICK===" << std::endl;
 			handleNick(socket, paramList[0]);
 		}
 	} else {

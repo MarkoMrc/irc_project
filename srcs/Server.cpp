@@ -138,7 +138,7 @@ void Server::authenticateClient(int socket, const std::string& password, const s
 		client->setUsername(username);
 		client->setNickname(nickname);
 		client->setLogged(true); // Indique que le client est authentifie
-		const char *authentication_message = "Vous êtes bien authentifie!\n";
+		const char *authentication_message = "Vous êtes bien authentifie!\r\n";
 		send(socket, authentication_message, strlen(authentication_message), 0);
 		std::cout << "Client authentifie avec le nickname: " << nickname << " et username: " << username << std::endl;
 	}

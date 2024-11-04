@@ -2,7 +2,7 @@
 
 
 void Server::handleKick(int socket, const std::string& params) {
-	std::cout << "Commande KICK reçue avec params: " << params << std::endl;
+	std::cout << "===Commande KICK reçue avec params: " << params << "===" << std::endl;
 
 	std::vector<std::string> parsedParams = parseKickParams(params);
 	if (parsedParams.size() < 2) {
@@ -88,10 +88,15 @@ void Server::executeKick(Client* kicker, Client* kickee, Channel* channel, const
 		kickMessage += " :" + reason;
 	}
 	kickMessage += "\r\n";
+	std::string message = ":" + kicker->getNickname() + " vous a kick du channel " + channelName + "\r\n";
 
 	channel->broadcastMessage(kickMessage, kickee);
+	
 	channel->removeClient(kickee->getFd());
-
+	if (channel->isClient(*kickee))
+		std::cout << "IL EST TOUJOURS LA" << std::endl;
+	else
+		send(kickee->getFd(),message.c_str(), message.size(), 0);
 	std::cout << "Client " << targetNickname << " expulsé du canal " << channelName << " par " << kicker->getNickname();
 	if (!reason.empty()) {
 		std::cout << " pour la raison : " << reason;

@@ -1,7 +1,7 @@
 #include "../inc/Server.hpp"
 
 void Server::handleMode(int socket, const std::string& params) {
-	std::cout << "Commande MODE reçue avec params: " << params << std::endl;
+	std::cout << "===Commande MODE reçue avec params: " << params << std::endl;
 
 	std::vector<std::string> words = parseParams(params);
 	Client* client = getClient(socket);

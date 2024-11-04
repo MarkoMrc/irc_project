@@ -2,22 +2,36 @@
 #include "../inc/Server.hpp"
 
 // CAP LS
-void Server::handleCapLs(int socket) {
-	std::cout << "Commande CAP LS reçue" << std::endl;
+void Server::handleCapLs(int socket, std::string command) {
 	Client *client = getClient(socket);
 	if (!client){
 		std::cout << "erreur !client : "<< getClient(socket) << std::endl;
 	};
 
-	const char *cap_response = "CAP * LS :\r\n";
-	send(socket, cap_response, strlen(cap_response), 0);
-	std::cout << "CAP LS" << std::endl;
+	if (command == "LS") {
+        // Logique pour gérer CAP LS
+		std::cout << "===Commande CAP LS reçue===" << std::endl;
+        std::string response = ":server CAP * LS :\r\n";
+        send(socket, response.c_str(), response.size(), 0); // Envoyer la liste des capacités
+    } 
+    // Vérifiez si la commande est CAP END
+    else if (command == "END") {
+        // Logique pour gérer CAP END
+        // std::string response = ":server CAP * END :End of CAP list\r\n";
+		std::cout << "===Command CAP END reçue===" << std::endl;
+        // send(socket, response.c_str(), response.size(), 0); // Envoyer la confirmation de la fin des capacités
+    } 
+    else {
+        // Gérer les commandes non reconnues si nécessaire
+        std::string errorResponse = ":server ERR_UNKNOWNCAP :Unknown CAP command\r\n";
+        send(socket, errorResponse.c_str(), errorResponse.size(), 0);
+    }
 }
 
 void Server::handlePass(int socket, const std::string& params, bool firstConnexion, std::string nick, std::string user) {
 	if (params[0] != ' ') {
 		std::string client_password = params.substr(0, params.find(' '));
-		std::cout << "Commande PASS reçue avec params: " << params << std::endl;
+		std::cout << "===Commande PASS reçue avec params: " << params << "===" << std::endl;
 		std::string mdp = getPassword();
 		if (client_password == mdp) {
 			std::cout << "Mot de passe correct." << std::endl;
@@ -59,7 +73,7 @@ bool Server::checkNick(const std::string& params)
 
 
 void Server::handleNick(int socket, const std::string& params) {
-	std::cout << "Commande NICK reçue avec params: " << params << std::endl;
+	std::cout << "===Commande NICK reçue avec params: " << params << "===" << std::endl;
 	Client *client = getClient(socket);
 	if (!client){
 		std::cout << "erreur !client : "<< getClient(socket) << std::endl;
@@ -89,7 +103,7 @@ void Server::handleNick(int socket, const std::string& params) {
 
 
 void Server::handleUser(int socket, const std::string& params) {
-	std::cout << "Commande USER reçue avec params: " << params << std::endl;
+	std::cout << "===Commande USER reçue avec params: " << params << "===" << std::endl;
 
 	std::istringstream iss(params);
 	std::string realname, hostname, servername, username;
@@ -122,7 +136,7 @@ void Server::handleUser(int socket, const std::string& params) {
 }
 
 void Server::handleQuit(int socket, const std::string& params) {
-	std::cout << "Commande QUIT reçue" << std::endl;
+	std::cout << "===Commande QUIT reçue===" << std::endl;
 	Client *client = getClient(socket);
 	if (!client) {
 		std::cout << "Erreur : client introuvable." << std::endl;
@@ -148,6 +162,7 @@ void Server::handleQuit(int socket, const std::string& params) {
 		(*it)->removeClient(client->getFd());
 	}
 
+	client->setLogged(false); // Indique que le client est authentifie
 	removeClient(client);
 
 	std::cout << "Client " << client->getNickname() << " QUIT : " << (params.empty() ? "has quit." : params) << std::endl;

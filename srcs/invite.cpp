@@ -2,7 +2,7 @@
 
 
 void Server::handleInvite(int socket, const std::string& params) {
-	std::cout << "Commande INVITE reçue avec params: " << params << std::endl;
+	std::cout << "===Commande INVITE reçue avec params: " << params << "===" << std::endl;
 
 	std::vector<std::string> parsedParams = parseParams(params);
 	if (!validateParams(parsedParams)) return;

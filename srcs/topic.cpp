@@ -1,7 +1,7 @@
 #include "../inc/Server.hpp"
 
 void Server::handleTopic(int socket, const std::string& params) {
-	std::cout << "Commande TOPIC reçue avec params: " << params << std::endl;
+	std::cout << "===Commande TOPIC reçue avec params: " << params << "===" << std::endl;
 		
 	Client* client = getClient(socket);
 	if (!client) return;

@@ -52,7 +52,7 @@ private:
 	int server_socket_fd;
 	int epoll_fd;
 	bool firstConnexion;
-	void handleCapLs(int socket);
+	void handleCapLs(int socket, std::string command);
 	void handlePass(int socket, const std::string& params, bool firstConnexion, std::string nick, std::string user);
 	void handleNick(int socket, const std::string& params);
 	void handleUser(int socket, const std::string& params);

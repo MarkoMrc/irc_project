@@ -1,7 +1,7 @@
 #include "../inc/Server.hpp"
 
 void Server::handlePrivmsg(int socket, const std::string& params) {
-	std::cout << "Commande PRIVMSG reçue avec params: " << params << std::endl;
+	std::cout << "===Commande PRIVMSG reçue avec params: " << params <<  "===" << std::endl;
 
 	Client* client = getClient(socket);
 	if (!validateClient(client, socket)) return;
@@ -42,6 +42,10 @@ bool Server::isChannelMessage(const std::string& target) {
 void Server::handleChannelMessage(Client* client, const std::string& target, const std::string& message) {
 	Channel* channel = getChannel(target);
 	if (!validateChannel(channel, target)) return;
+	if (!channel->isClient(*client)) {
+		std::cerr << "le client n'appartient pas au channel spécifié" << std::endl;
+		return;
+	}
 
 	std::string formatted_message = ":" + client->getNickname() + " PRIVMSG " + target + " :" + message + "\r\n";
 	broadcastChannelMessage(channel, client, formatted_message);
