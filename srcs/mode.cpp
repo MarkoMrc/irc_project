@@ -9,6 +9,8 @@ void Server::handleMode(int socket, const std::string& params) {
 
 	if (!channel) {
 		std::cerr << "Erreur: le channel spécifié n'existe pas" << std::endl;
+		const char *msg = "ERR_NOSUCHCHANNEL (403) : Le channel spécifié n'existe pas.\r\n";
+		send(socket, msg, strlen(msg), 0);
 		return;
 	}
 
@@ -29,13 +31,13 @@ void Server::processModeCommand(Channel* channel, Client* client, const std::vec
 	if (words[1] == "+o" || words[1] == "-o") {
 		handleOperatorMode(channel, words, socket);
 	} else if (words[1] == "+i" || words[1] == "-i") {
-		handleInviteOnlyMode(channel, words, socket);
+		handleInviteOnlyMode(channel, words, client, socket);
 	} else if (words[1] == "+t" || words[1] == "-t") {
-		handleTopicProtectionMode(channel, words, socket);
+		handleTopicProtectionMode(channel, words, client, socket);
 	} else if (words[1] == "+k" || words[1] == "-k") {
-		handlePasswordMode(channel, words, socket);
+		handlePasswordMode(channel, words, client, socket);
 	} else if (words[1] == "+l" || words[1] == "-l") {
-		handleLimitMode(channel, words, socket);
+		handleLimitMode(channel, words, client, socket);
 	} else {
 		std::cerr << "Erreur: mode inconnu" << std::endl;
 	}
@@ -82,7 +84,7 @@ void Server::handleOperatorMode(Channel* channel, const std::vector<std::string>
 }
 
 // Gestion du mode invitation uniquement
-void Server::handleInviteOnlyMode(Channel* channel, const std::vector<std::string>& words, int socket) {
+void Server::handleInviteOnlyMode(Channel* channel, const std::vector<std::string>& words, Client* client, int socket) {
 	if (words[1] == "+i") {
 		if (channel->isModeInviteOnly()) {
 			std::cerr << "le channel spécifié est déjà sur invitation uniquement" << std::endl;
@@ -92,7 +94,7 @@ void Server::handleInviteOnlyMode(Channel* channel, const std::vector<std::strin
 			channel->setModeInviteOnly(true);
 			std::cout << "Ce channel est désormais sur invitation only" << std::endl;
 			const char *msg = "Ce channel est désormais sur invitation only\r\n";
-			send(socket, msg, strlen(msg), 0);
+			broadcastChannelMessage(channel, client, msg);
 		}
 	} else {
 		if (!channel->isModeInviteOnly()) {
@@ -103,18 +105,18 @@ void Server::handleInviteOnlyMode(Channel* channel, const std::vector<std::strin
 			channel->setModeInviteOnly(false);
 			std::cout << "Ce channel n'est plus sur invitation Only" << std::endl;
 			const char *msg = "Ce channel n'est plus sur invitation Only\r\n";
-			send(socket, msg, strlen(msg), 0);
+			broadcastChannelMessage(channel, client, msg);
 		}
 	}
 }
 
 // Gestion du mode protection de sujet
-void Server::handleTopicProtectionMode(Channel* channel, const std::vector<std::string>& words, int socket) {
+void Server::handleTopicProtectionMode(Channel* channel, const std::vector<std::string>& words, Client* client, int socket) {
 	if (words[1] == "+t") {
 		channel->setModeTopicOp(true);
 		std::cout << "Ce channel est désormais protégé sur le TOPIC" << std::endl;
 		const char *msg = "Ce channel est désormais protégé sur le TOPIC\r\n";
-		send(socket, msg, strlen(msg), 0);
+		broadcastChannelMessage(channel, client, msg);
 	} else {
 		if (!channel->isModeTopicOp()) {
 			std::cerr << "Erreur: le channel spécifié n'a pas de restriction sur la commande TOPIC" << std::endl;
@@ -124,13 +126,13 @@ void Server::handleTopicProtectionMode(Channel* channel, const std::vector<std::
 			channel->setModeTopicOp(false);
 			std::cout << "Ce channel n'est plus protégé sur le TOPIC" << std::endl;
 			const char *msg = "Ce channel n'est plus protégé sur le TOPIC\r\n";
-			send(socket, msg, strlen(msg), 0);
+			broadcastChannelMessage(channel, client, msg);
 		}
 	}
 }
 
 // Gestion du mode mot de passe
-void Server::handlePasswordMode(Channel* channel, const std::vector<std::string>& words, int socket) {
+void Server::handlePasswordMode(Channel* channel, const std::vector<std::string>& words, Client* client, int socket) {
 	if (words[1] == "+k") {
 		if (words.size() != 3) {
 			const char *msg = "ERR_NEEDMOREPARAMS (461) : Pas assez de paramètres fournis pour la commande INVITE\r\n";
@@ -142,7 +144,7 @@ void Server::handlePasswordMode(Channel* channel, const std::vector<std::string>
 			channel->setModePasswordProtected(true);
 			std::cout << "Ce channel est désormais sous mot de passe" << std::endl;
 			const char *msg = "Ce channel est désormais sous mot de passe\r\n";
-			send(socket, msg, strlen(msg), 0);
+			broadcastChannelMessage(channel, client, msg);
 		}
 		channel->setPassword(words[2]);
 	} else {
@@ -154,13 +156,13 @@ void Server::handlePasswordMode(Channel* channel, const std::vector<std::string>
 			channel->setModePasswordProtected(false);
 			std::cout << "Ce channel n'est plus sous mot de passe" << std::endl;
 			const char *msg = "Ce channel n'est plus sous mot de passe\r\n";
-			send(socket, msg, strlen(msg), 0);
+			broadcastChannelMessage(channel, client, msg);
 		}
 	}
 }
 
 // Gestion du mode limite
-void Server::handleLimitMode(Channel* channel, const std::vector<std::string>& words, int socket) {
+void Server::handleLimitMode(Channel* channel, const std::vector<std::string>& words, Client* client, int socket) {
 	if (words[1] == "+l") {
 		if (words.size() != 3) {
 			const char *msg = "ERR_NEEDMOREPARAMS (461) : Pas assez de paramètres fournis pour la commande INVITE\r\n";
@@ -172,7 +174,7 @@ void Server::handleLimitMode(Channel* channel, const std::vector<std::string>& w
 			channel->setModeLimit(true);
 			std::cout << "Ce channel est limité" << std::endl;
 			const char *msg = "Ce channel est limité\r\n";
-			send(socket, msg, strlen(msg), 0);
+			broadcastChannelMessage(channel, client, msg);
 		}
 		int limit = atoi(words[2].c_str());
 		if (limit <= 0) {
@@ -191,7 +193,7 @@ void Server::handleLimitMode(Channel* channel, const std::vector<std::string>& w
 			channel->setModeLimit(false);
 			std::cout << "Ce channel n'est plus limité" << std::endl;
 			const char *msg = "Ce channel n'est plus limité.\r\n";
-			send(socket, msg, strlen(msg), 0);
+			broadcastChannelMessage(channel, client, msg);
 		}
 	}
 }

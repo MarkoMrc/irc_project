@@ -44,10 +44,12 @@ void Server::handlePass(int socket, const std::string& params, bool firstConnexi
 			send(socket, msg1, strlen(msg1), 0);
 		}
 		if (client_password == mdp) {
-			std::cout << "Mot de passe correct." << std::endl;
+			if (!client->isPswdEnterd()){
+				std::cout << "Mot de passe correct." << std::endl;
+				const char *msg = "Mot de passe correct.\r\n";
+				send(socket, msg, strlen(msg), 0);
+			}
 			client->setPswdEnterd(true);
-			const char *msg = "Mot de passe correct.\r\n";
-			send(socket, msg, strlen(msg), 0);
 			if (firstConnexion)
 			{
 				if (!nick.empty())

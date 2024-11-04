@@ -61,12 +61,11 @@ void Server::handleChannelMessage(Client* client, const std::string& target, con
 }
 
 void Server::broadcastChannelMessage(Channel* channel, Client* client, const std::string& message) {
+	(void) client;
 	const std::vector<Client*>& channelClients = channel->getClients();
 	for (std::vector<Client*>::const_iterator it = channelClients.begin(); it != channelClients.end(); ++it) {
 		Client* channelClient = *it;
-		if (channelClient->getFd() != client->getFd()) {
-			send(channelClient->getFd(), message.c_str(), message.length(), 0);
-		}
+		send(channelClient->getFd(), message.c_str(), message.length(), 0);
 	}
 }
 

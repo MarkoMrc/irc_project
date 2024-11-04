@@ -65,10 +65,10 @@ private:
 	void handlePrivmsg(int socket, const std::string& params);
 	void handleInvite(int socket, const std::string& params);
 	void handleOperatorMode(Channel* channel, const std::vector<std::string>& words, int socket);
-    void handleInviteOnlyMode(Channel* channel, const std::vector<std::string>& words, int socket);
-    void handleTopicProtectionMode(Channel* channel, const std::vector<std::string>& words, int socket);
-    void handlePasswordMode(Channel* channel, const std::vector<std::string>& words, int socket);
-    void handleLimitMode(Channel* channel, const std::vector<std::string>& words, int socket);
+    void handleInviteOnlyMode(Channel* channel, const std::vector<std::string>& words, Client* client, int socket);
+    void handleTopicProtectionMode(Channel* channel, const std::vector<std::string>& words, Client* client, int socket);
+    void handlePasswordMode(Channel* channel, const std::vector<std::string>& words, Client* client, int socket);
+    void handleLimitMode(Channel* channel, const std::vector<std::string>& words, Client* client, int socket);
 	// std::vector<std::string> split(const std::string& str, char delimiter);
 	std::vector<std::string> parsJoin(const std::string& params);
 	bool checkNick(const std::string& params);

@@ -313,7 +313,7 @@ void Server::run() {
 
 void Server::closing_sockets()
 {
-	std::cout << "closing sockets" << std::endl;
+	// std::cout << "closing sockets" << std::endl;
 	close(server_socket_fd);
 	close(epoll_fd);
 	std::vector<Client*>::iterator it;

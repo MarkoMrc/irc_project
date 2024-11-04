@@ -108,7 +108,7 @@ Client *Channel::getAdmin(int fd){
 
 void Channel::addClient(Client* new_client){
 	clients.push_back(new_client);
-	std::cout << "Client FD: " << new_client->getFd() << " ajouté au canal." << std::endl;
+	// std::cout << "Client FD: " << new_client->getFd() << " ajouté au canal." << std::endl;
 }
 
 void Channel::addAdmin(Client new_client){
