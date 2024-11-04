@@ -419,7 +419,7 @@ void Server::handleConnection(int socket) {
 			// if (!client) {
 			// 	std::cerr << "Erreur: client non trouvé pour le socket " << socket << std::endl;
 			// }
-			if (client)
+			if (client && command != "QUIT")
 			{
 				if (!getClient(socket)->isLogged() && !getClient(socket)->getNickname().empty() && !getClient(socket)->getUsername().empty()) {
 					std::string nick = getClient(socket)->getNickname();
