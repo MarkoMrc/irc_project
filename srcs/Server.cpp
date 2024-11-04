@@ -353,7 +353,7 @@ void Server::removeClient(Client* client) {
 				// Supprimer le client de la liste
 				clients.erase(it);
 				delete client; // Libération de la mémoire
-				std::cout << "Client supprimé de la liste." << std::endl;
+				// std::cout << "Client supprimé de la liste." << std::endl;
 				return;
 			}
 
