@@ -13,14 +13,14 @@ void Server::handleCapLs(int socket, std::string command) {
 		std::cout << "===Commande CAP LS reçue===" << std::endl;
         std::string response = ":server CAP * LS :\r\n";
         send(socket, response.c_str(), response.size(), 0); // Envoyer la liste des capacités
-    } 
+    }
     // Vérifiez si la commande est CAP END
     else if (command == "END") {
         // Logique pour gérer CAP END
         // std::string response = ":server CAP * END :End of CAP list\r\n";
 		std::cout << "===Command CAP END reçue===" << std::endl;
         // send(socket, response.c_str(), response.size(), 0); // Envoyer la confirmation de la fin des capacités
-    } 
+    }
     else {
         // Gérer les commandes non reconnues si nécessaire
         std::string errorResponse = ":server ERR_UNKNOWNCAP :Unknown CAP command\r\n";
@@ -133,6 +133,7 @@ void Server::handleUser(int socket, const std::string& params) {
 	std::getline(iss, username, ' ');
 	std::getline(iss, hostname, ' ');
 	std::getline(iss, servername, ':');
+	servername = servername.substr(0, servername.size() - 1);
 	std::getline(iss, realname, '\n');  // username est precede de ':'
 	Client *client = getClient(socket);
 	if (client) {
