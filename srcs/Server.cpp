@@ -235,7 +235,7 @@ void Server::createSocket() {
 		std::cerr << "Erreur lors de la création du socket" << std::endl;
 		exit(EXIT_FAILURE);
 	}
-	this->server_socket_fd = server_socket_fd;
+	// this->server_socket_fd = server_socket_fd;
 }
 
 void Server::configureSocket() {
@@ -274,7 +274,7 @@ void Server::initializeEpoll() {
 		perror("Erreur de epoll_create");
 		exit(EXIT_FAILURE);
 	}
-	this->epoll_fd = epoll_fd;
+	// this->epoll_fd = epoll_fd;
 	struct epoll_event ev;
 	memset(&ev, 0, sizeof(ev));
 	ev.events = EPOLLIN;

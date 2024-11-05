@@ -14,7 +14,7 @@ faire en sorte que ce soit possible de le faire dans n'importe quel sens ;
 -gerer les admins (mode)
 
 -parsing des commandes : () quand c'est optionnel
-	JOIN : JOIN #nom_du_chann (#nom_du_chann2) mdp (mdp2)
+	JOIN : JOIN #nom_du_chann mdp
 	NICK : NICK nickname
 	USER : USER username hostname servername :realname
 	QUIT : QUIT "avec la raison en param"

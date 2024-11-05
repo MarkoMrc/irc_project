@@ -124,7 +124,7 @@ void Server::handleUser(int socket, const std::string& params) {
 	std::getline(iss, username, ' ');
 	std::getline(iss, hostname, ' ');
 	std::getline(iss, servername, ':');
-	std::getline(iss, realname, ' ');  // username est precede de ':'
+	std::getline(iss, realname, '\n');  // username est precede de ':'
 	Client *client = getClient(socket);
 	if (client) {
 		if (username.empty()){
