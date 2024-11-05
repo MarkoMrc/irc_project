@@ -16,10 +16,7 @@ void Server::handleCapLs(int socket, std::string command) {
     }
     // Vérifiez si la commande est CAP END
     else if (command == "END") {
-        // Logique pour gérer CAP END
-        // std::string response = ":server CAP * END :End of CAP list\r\n";
 		std::cout << "===Command CAP END reçue===" << std::endl;
-        // send(socket, response.c_str(), response.size(), 0); // Envoyer la confirmation de la fin des capacités
     }
     else {
         // Gérer les commandes non reconnues si nécessaire
@@ -195,6 +192,7 @@ void Server::handleQuit(int socket, const std::string& params) {
 	}
 
 	client->setLogged(false); // Indique que le client est authentifie
+	client->setPswdEnterd(false); // Indique que le client est authentifie
 	removeClient(client);
 
 	std::cout << "Client " << client->getNickname() << " QUIT : " << (params.empty() ? "has quit." : params) << std::endl;

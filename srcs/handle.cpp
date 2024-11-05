@@ -115,6 +115,8 @@ void Server::processCommand(int socket, const std::string& command_line, std::st
 void Server::handlePassCommand(int socket, const std::vector<std::string>& paramList, Client* client, std::string& pass) {
 	if (paramList.size() == 1) {
 		handlePass(socket, paramList[0], getFirstConnexion(), client->getTmpNick(), client->getTmpUser());
+		client->setTmpNick("");
+		client->setTmpUser(""); 
 		pass = paramList[0];
 		setFirstConnexion(false);
 	} else {
@@ -175,6 +177,13 @@ void Server::handleClientDisconnection(int socket, Client* client) {
 			(*it)->removeClient(client->getFd());
 		}
 	}
+	client->setPswdEnterd(false); // Indique que le client est authentifie
+	client->setLogged(false); // Indique que le client est authentifie
+	client->setNickname("");
+	client->setUsername("");
+	client->setServername("");
+	client->setHostname("");
+	client->setRealname("");
 	removeClient(client);
 	std::cout << "Client deconnecte, socket: " << socket << std::endl;
 	close(socket);
