@@ -114,6 +114,15 @@ void Server::handleNick(int socket, const std::string& params) {
 
 }
 
+static bool hasNoWhiteSpace(const std::string &string){
+	for (std::string::const_iterator it = string.begin(); it != string.end(); ++it)
+	{
+		if (std::isspace(static_cast<unsigned char> (*it)))
+			return false;
+	}
+	return true;
+}
+
 
 void Server::handleUser(int socket, const std::string& params) {
 	std::cout << "===Commande USER reçue avec params: " << params << "===" << std::endl;
@@ -127,6 +136,11 @@ void Server::handleUser(int socket, const std::string& params) {
 	std::getline(iss, realname, '\n');  // username est precede de ':'
 	Client *client = getClient(socket);
 	if (client) {
+		if (!hasNoWhiteSpace(servername)) {
+			const char *msg = "Too many parameters for the USER command\r\n";
+			send(socket, msg, strlen(msg), 0);
+			return ;
+		}
 		if (username.empty()){
 			const char *msg = "ERR_NEEDMOREPARAMS (461) : Pas assez de paramètres pour la commande USER.\r\n";
 			send(socket, msg, strlen(msg), 0);
