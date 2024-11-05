@@ -1,16 +1,6 @@
 #include "../inc/Server.hpp"
 #include "../inc/Signal.hpp"
 
-// void signalHandler(int signum) {
-// 	if (signum == SIGINT)
-// 	{
-// 		// std::cout << "controle C" << std::endl;
-// 		exit(1);
-// 	}
-// }
-
-
-
 int main(int argc, char **argv)
 {
 	Server *server = Server::getServer();
